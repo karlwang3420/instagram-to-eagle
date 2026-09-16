@@ -1,0 +1,68 @@
+{
+  "manifest_version": 3,
+  "name": "Instagram to Eagle",
+  "version": "0.9.2",
+  "description": "Save Instagram posts, profile grids, Reels and Stories to Eagle with a short title, source link and tags.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "instagram-to-eagle@local.karl",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.instagram.com/*",
+    "https://instagram.com/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "scripts": [
+      "access.js",
+      "core.js",
+      "extractor.js",
+      "stories.js",
+      "background.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.instagram.com/*",
+        "https://instagram.com/*"
+      ],
+      "js": [
+        "carousel-dom.js",
+        "content.js",
+        "profile-controls.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Instagram to Eagle",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png"
+    }
+  },
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:41595 https://www.instagram.com https://instagram.com; img-src 'self' https://*.cdninstagram.com https://*.fbcdn.net https://*.instagram.com;"
+  }
+}

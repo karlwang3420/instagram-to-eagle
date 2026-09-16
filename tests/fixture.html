@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#fafafa;font:14px sans-serif}main{width:500px;margin:10px auto}article{border:1px solid #aaa;margin-bottom:30px;padding:10px}.viewport{width:460px;height:300px;overflow:hidden;position:relative}.track{display:flex;height:300px;width:1380px;transition:none}.track img,.track video{width:460px;height:300px;min-width:460px;object-fit:cover}.arrows{display:flex;justify-content:space-between;margin-top:5px}header img{width:30px;height:30px}a{color:blue}
+section.actions{display:flex;align-items:center;gap:12px;height:44px;margin-top:10px}section.actions button{border:0;background:transparent;color:inherit;font:26px sans-serif;padding:4px;width:32px;height:36px}section.actions button:last-child{margin-left:auto}
+</style></head><body><main>
+<article id="post"><header><a href="/artist/">artist</a><a href="/p/B/"><time datetime="2026-09-15T12:00:00Z">1 day ago</time></a></header><div class="viewport"><div class="track"><img src="https://s.cdninstagram.com/a.jpg" alt="First image"><video poster="https://s.cdninstagram.com/video-cover.jpg" src="https://v.cdninstagram.com/video.mp4"></video><img src="https://s.cdninstagram.com/b.jpg" alt="Third image"></div></div><div class="arrows"><button aria-label="Previous">←</button><button aria-label="Next">→</button></div><section class="actions"><button aria-label="Like">♡</button><button aria-label="Comment">◯</button><button aria-label="Share">↗</button><button aria-label="Save"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M5 3h14v18l-7-5-7 5z" stroke="currentColor" stroke-width="2" fill="none"/></svg></button></section><h1>Full caption #illustration #設計</h1></article>
+<article id="neighbor"><a href="/other/">other</a><a href="/p/C/"><time datetime="2026-09-14T12:00:00Z">2 days ago</time></a><img src="https://s.cdninstagram.com/wrong.jpg" width="460" height="300" alt="Wrong post"></article>
+</main><script>
+window.slide = 2;
+const root = document.getElementById('post');
+function render(){root.querySelector('.track').style.transform=`translateX(${-460*window.slide}px)`;root.querySelector('[aria-label="Previous"]').style.visibility=window.slide===0?'hidden':'visible';root.querySelector('[aria-label="Next"]').style.visibility=window.slide===2?'hidden':'visible';}
+root.querySelector('[aria-label="Previous"]').onclick=()=>{window.slide--;render()};root.querySelector('[aria-label="Next"]').onclick=()=>{window.slide++;render()};render();
+const img = id => ({pk:id,media_type:1,image_versions2:{candidates:[{url:`https://s.cdninstagram.com/${id}.jpg`,width:1080,height:1350}]}});
+window.fixturePost={pk:'1',code:'B',media_type:8,carousel_media_count:3,user:{username:'artist',full_name:'Artist Name'},caption:{text:'Full caption #illustration #設計'},taken_at:1700000000,like_count:0,carousel_media:[img('a'),{pk:'video',media_type:2,video_versions:[{url:'https://v.cdninstagram.com/video.mp4',width:1080,height:1920}]},img('b')]};
+root.__reactProps$fixture={post:window.fixturePost};
+</script></body></html>
