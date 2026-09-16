@@ -4,7 +4,7 @@
 
 A Firefox extension that saves Instagram photos, videos, carousels, Reels, and Stories directly to your [Eagle](https://eagle.cool/) library, with a short title, source link, and optional tags.
 
-[Download v0.9.2](https://github.com/karlwang3420/instagram-to-eagle/raw/refs/heads/main/dist/instagram-to-eagle-0.9.2-unsigned.xpi) · [Changelog](CHANGELOG.md) · [Development](docs/DEVELOPMENT.md)
+[Download v0.9.2](https://github.com/karlwang3420/instagram-to-eagle/raw/refs/heads/main/dist/instagram-to-eagle-0.9.2-unsigned.xpi) · [Changelog](CHANGELOG.md) · [Development](docs/DEVELOPMENT.md) · [Privacy](PRIVACY.md)
 
 ## Install
 
@@ -59,8 +59,14 @@ The extension talks to Instagram and Eagle's local API at `http://127.0.0.1:4159
 
 Instagram access and scripting permissions let the extension find media on the page. Localhost access lets it send imports to Eagle. Storage holds your destination folder and tag preferences.
 
+Read the [privacy policy](PRIVACY.md) for details about network requests, local storage, and your choices.
+
 ## Development
 
 Clone this repository and load `manifest.json` through **Load Temporary Add-on…**. No build step or runtime dependencies are required.
 
 See the [development guide](docs/DEVELOPMENT.md) for testing, packaging, and icon generation, and the [changelog](CHANGELOG.md) for version history.
+
+## License
+
+[MIT](LICENSE). This is an independent project, not affiliated with or endorsed by Instagram, Meta, or Eagle.

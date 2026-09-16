@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parent.parent
 VERSION = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))["version"]
 RUNTIME = [
     "manifest.json",
+    "LICENSE",
     "popup.html",
     "popup.js",
     "popup.css",
@@ -26,11 +27,14 @@ SOURCE = RUNTIME + [
     "icon.svg",
     "README.md",
     "CHANGELOG.md",
-    "docs/DEVELOPMENT.md",
+    "PRIVACY.md",
     ".gitignore",
     "artwork/instagram_to_eagle_icon-source.png",
     "tools/build_icons.py",
     "tools/package_extension.py",
+    "tools/prepare_amo.py",
+    *(str(path.relative_to(ROOT)).replace("\\", "/")
+      for path in sorted((ROOT / "docs").rglob("*")) if path.is_file()),
     *(str(path.relative_to(ROOT)).replace("\\", "/")
       for path in sorted((ROOT / "tests").iterdir()) if path.is_file()),
 ]

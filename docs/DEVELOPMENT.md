@@ -34,7 +34,7 @@ Focused suites use the same runner:
 
 The runner creates an isolated headless Firefox profile under `work/` and saves screenshots there. It mocks Instagram responses and Eagle import requests, and only reads the running Eagle app's version. Set `FIREFOX_BIN` if Firefox is installed outside the default location.
 
-Passing fixtures do not establish compatibility with every live Instagram layout. Native Firefox permission approval and a fresh signed installation still require manual verification. During 0.9.2 validation, all 59 unit tests passed and temporary installation succeeded; the broader browser run stopped with `DiscardedBrowsingContextError` before completing.
+Passing fixtures do not establish compatibility with every live Instagram layout. For 0.9.2, all 59 unit tests passed. The owner confirmed a fresh Firefox installation and manual testing on September 16, 2026. The Firefox 156 setup/settings suite also passed when run outside the Windows execution sandbox; the earlier `DiscardedBrowsingContextError` did not recur. That suite verifies real permission revocation, but simulates the native approval/denial boundary and mocks Eagle imports. The owner's report is not an agent-observed test of every supported media type or operating system.
 
 ## Packaging
 
