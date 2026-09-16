@@ -2,6 +2,11 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
+## 0.9.4
+
+- Version-only release for submission to the public AMO channel; 0.9.3 was already uploaded.
+- Same extension ID, permissions, and application code as 0.9.3.
+
 ## 0.9.3
 
 - Simplified the popup and setup copy, removing decorative and repeated text.

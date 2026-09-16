@@ -1,4 +1,17 @@
-# Publication checks — 0.9.3
+# Publication checks — 0.9.4
+
+## Public-channel package
+
+- File: `dist/instagram-to-eagle-0.9.4-unsigned.xpi`
+- Size: 84,833 bytes
+- SHA-256: `d9410bdddf8d6d050512192a177df631644895cad1b38e36334c56442d96d4c2`
+- Compared both archives: all 17 non-manifest members are byte-identical to 0.9.3; the manifest differs only in `version` (0.9.3 → 0.9.4).
+- Mozilla Add-ons Linter 10.8.0: zero errors, zero notices, the same one Android warning documented below.
+- The publisher reported 0.9.3 working after testing. The screenshot shows 0.9.3 approved, but does not establish public availability.
+- Unit/browser suites were not repeated for this version-only increment; their preceding results follow below. No claim of manual testing of 0.9.4 is made.
+- Upload 0.9.4 through the existing entry with **On this site** selected. Do not create a new add-on or reuse the already submitted 0.9.3 version number.
+
+## Previous implementation checks — 0.9.3
 
 Checked September 16, 2026. This records preparation and test evidence, not Mozilla approval.
 
@@ -16,7 +29,7 @@ This new package simplifies the popup/setup copy and layout, increments the vers
 
 | Check | Result |
 | --- | --- |
-| Publisher's fresh install and manual testing | Confirmed by the publisher for 0.9.2 only; live manual retesting of 0.9.3 remains |
+| Publisher's manual testing | Fresh install/testing reported for 0.9.2; subsequently reported 0.9.3 working; exact media cases were not enumerated |
 | Unit tests | 59 passed after the 0.9.3 popup changes |
 | Firefox setup/settings suite | Passed in Firefox 156.0 outside the Windows execution sandbox |
 | Permission coverage | Real revocation blocks imports; native approval/denial is simulated in the automated suite |
@@ -31,7 +44,7 @@ The earlier `DiscardedBrowsingContextError` did not recur outside the execution 
 
 ## Remaining submission matters
 
-- Manually retest 0.9.3 on live Instagram, then upload it to the existing add-on entry.
+- Upload the version-only 0.9.4 package to the existing add-on entry under **On this site**.
 - Set English (US) as the listing's default locale and save the prepared content.
 - Select MIT in AMO and link or paste the privacy policy.
 - Verify the existing entry's distribution channel and public-listing status.

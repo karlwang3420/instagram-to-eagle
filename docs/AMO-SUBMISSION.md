@@ -1,4 +1,4 @@
-# AMO listing — Instagram to Eagle 0.9.3
+# AMO listing — Instagram to Eagle 0.9.4
 
 Copy the text below into the existing AMO entry. The tested extension ID remains `instagram-to-eagle@local.karl`; creating a second add-on is unnecessary.
 
@@ -92,11 +92,11 @@ These screenshots show the actual 0.9.3 interface rendered by the Firefox test f
 
 Use [AMO-REVIEWER-NOTES.md](AMO-REVIEWER-NOTES.md) for the technical review field. Add any required test-account credentials only in AMO's private reviewer notes, never to this repository.
 
-Suggested 0.9.3 release note:
+Suggested 0.9.4 release note:
 
-Simplified the popup and setup text, with a more compact layout for connection status, folders, and tag controls. Included the MIT license.
+Prepared for public AMO distribution. Functionality is unchanged from 0.9.3, including the simplified popup and setup interface.
 
-Version 0.9.3 contains the popup cleanup requested after the publisher tested 0.9.2. Test the new XPI on live Instagram before submitting it through **Upload New Version** on the existing entry. The original 0.9.2 package is retained. The new artifact's SHA-256 and automated validation results are in [RELEASE-CHECKS.md](RELEASE-CHECKS.md).
+Version 0.9.3 was already uploaded and the publisher reported it working. Version 0.9.4 changes only the manifest version within the runtime package. On the existing entry, choose **Upload a New Version → Where to Host Version → On this site**, then upload the 0.9.4 XPI. Do not create a new add-on or change the ID. Original packages are retained. Artifact validation is recorded in [RELEASE-CHECKS.md](RELEASE-CHECKS.md). The supplied screenshots remain the 0.9.3 captures; the interface is unchanged apart from its displayed version.
 
 ## Final account-only steps
 

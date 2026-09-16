@@ -1,4 +1,6 @@
-# Reviewer notes — Instagram to Eagle 0.9.3
+# Reviewer notes — Instagram to Eagle 0.9.4
+
+Version 0.9.4 is a version-only increment for public-channel submission because 0.9.3 was already uploaded. The extension ID, permissions, and application code are unchanged. The publisher subsequently reported 0.9.3 working; the automated checks below were run for that implementation. Store screenshots show 0.9.3.
 
 Publisher: `karlwang3420`
 
