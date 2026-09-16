@@ -25,6 +25,8 @@ RUNTIME = [
 SOURCE = RUNTIME + [
     "icon.svg",
     "README.md",
+    "CHANGELOG.md",
+    "docs/DEVELOPMENT.md",
     ".gitignore",
     "artwork/instagram_to_eagle_icon-source.png",
     "tools/build_icons.py",
