@@ -4,31 +4,29 @@
 <body>
   <div class="sheet">
     <header>
-      <div class="brand"><img src="icons/icon-48.png" width="42" height="42" alt=""><div><span class="eyebrow">YOUR REFERENCE SHELF</span><h1>Instagram <span>to</span> Eagle</h1></div></div>
-      <p class="intro">A little less scrolling. A little more collecting.</p>
+      <div class="brand"><img src="icons/icon-48.png" width="42" height="42" alt=""><h1>Instagram <span>to</span> Eagle</h1></div>
       <div class="connection"><span id="light" aria-hidden="true"></span><span id="connection" role="status">Checking Eagle…</span><button class="icon-button" id="reconnect" aria-label="Retry Eagle connection" title="Retry Eagle connection"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M19 12a7 7 0 1 0-2 5M20 12a8 8 0 0 0-2-6"/></svg></button></div>
     </header>
     <main>
       <section id="accessPanel" class="access-panel" aria-labelledby="accessHeading" hidden>
-        <span class="eyebrow">ONE-TIME SETUP</span><h2 id="accessHeading">Connect your collection.</h2>
-        <p id="accessDescription">Allow these two connections to save directly to Eagle.</p>
+        <h2 id="accessHeading">Access needed</h2>
+        <p id="accessDescription">Allow access to save Instagram media to Eagle.</p>
         <div class="access-row"><span>Instagram<small>Read the post you choose to save.</small></span><b id="instagramAccess">Checking</b></div>
-        <div class="access-row"><span>Eagle on this computer<small>Send files to 127.0.0.1:41595.</small></span><b id="eagleAccess">Checking</b></div>
+        <div class="access-row"><span>Eagle<small>Save to your library on this computer.</small></span><b id="eagleAccess">Checking</b></div>
         <button id="grantAccess" class="primary">Allow access <span aria-hidden="true">↗</span></button>
         <p id="accessStatus" role="status" aria-live="polite">Firefox will ask you to confirm.</p>
       </section>
-      <section class="destination" aria-labelledby="destinationHeading"><div class="section-title"><h2 id="destinationHeading">Save to</h2><span>EAGLE FOLDER</span></div>
+      <section class="destination" aria-labelledby="destinationHeading"><div class="section-title"><h2 id="destinationHeading">Save to</h2></div>
         <label class="sr-only" for="folder">Destination folder</label><div class="folder-row"><select id="folder" disabled><option value="">Unfiled</option></select><button class="icon-button" id="refreshFolders" title="Refresh Eagle folders" aria-label="Refresh Eagle folders"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M19 12a7 7 0 1 0-2 5M20 12a8 8 0 0 0-2-6"/></svg></button></div>
       </section>
-      <fieldset class="tag-options"><legend>Automatic tags</legend><p class="section-note">Keep the context you care about.</p>
+      <fieldset class="tag-options"><legend>Automatic tags</legend>
         <label class="option"><span class="option-symbol default-symbol" aria-hidden="true">↳</span><span class="option-copy"><strong>Default tags</strong><small>Instagram, plus Story or Reel</small></span><input type="checkbox" id="tagDefaults" checked disabled><span class="toggle" aria-hidden="true"></span></label>
-        <label class="option"><span class="option-symbol" aria-hidden="true">#</span><span class="option-copy"><strong>Post hashtags</strong><small>Hashtags from the caption</small></span><input type="checkbox" id="tagHashtags" checked disabled><span class="toggle" aria-hidden="true"></span></label>
-        <label class="option"><span class="option-symbol" aria-hidden="true">@</span><span class="option-copy"><strong>Creator</strong><small>The creator’s @username</small></span><input type="checkbox" id="tagCreator" checked disabled><span class="toggle" aria-hidden="true"></span></label>
+        <label class="option"><span class="option-symbol" aria-hidden="true">#</span><span class="option-copy"><strong>Post hashtags</strong></span><input type="checkbox" id="tagHashtags" checked disabled><span class="toggle" aria-hidden="true"></span></label>
+        <label class="option"><span class="option-symbol" aria-hidden="true">@</span><span class="option-copy"><strong>Creator username</strong></span><input type="checkbox" id="tagCreator" checked disabled><span class="toggle" aria-hidden="true"></span></label>
       </fieldset>
-      <div class="settings-line"><span id="settingsStatus" role="status" aria-live="polite">Loading preferences…</span><span>APPLIES TO FUTURE SAVES</span></div>
-      <p id="status" role="status" aria-live="polite">Save with the download buttons on Instagram.</p>
+      <p id="status" role="status" aria-live="polite"></p>
     </main>
-    <footer><span class="privacy-mark" aria-hidden="true">●</span>Direct to your library. No added annotation.<span id="version"></span></footer>
+    <footer><span id="settingsStatus" role="status" aria-live="polite">Loading preferences…</span><span id="version"></span></footer>
   </div>
   <script src="access.js"></script><script src="popup.js"></script>
 </body>

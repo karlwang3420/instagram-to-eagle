@@ -34,7 +34,7 @@ Focused suites use the same runner:
 
 The runner creates an isolated headless Firefox profile under `work/` and saves screenshots there. It mocks Instagram responses and Eagle import requests, and only reads the running Eagle app's version. Set `FIREFOX_BIN` if Firefox is installed outside the default location.
 
-Passing fixtures do not establish compatibility with every live Instagram layout. For 0.9.2, all 59 unit tests passed. The owner confirmed a fresh Firefox installation and manual testing on September 16, 2026. The Firefox 156 setup/settings suite also passed when run outside the Windows execution sandbox; the earlier `DiscardedBrowsingContextError` did not recur. That suite verifies real permission revocation, but simulates the native approval/denial boundary and mocks Eagle imports. The owner's report is not an agent-observed test of every supported media type or operating system.
+Passing fixtures do not establish compatibility with every live Instagram layout. For 0.9.3, all 59 unit tests passed. The owner confirmed a fresh Firefox installation and manual testing of the preceding 0.9.2 on September 16, 2026; live manual testing of 0.9.3 is still needed. The Firefox 156 setup/settings suite also passed when run outside the Windows execution sandbox; the earlier `DiscardedBrowsingContextError` did not recur. That suite verifies real permission revocation, but simulates the native approval/denial boundary and mocks Eagle imports. The owner's report is not an agent-observed test of every supported media type or operating system.
 
 ## Packaging
 
@@ -44,7 +44,7 @@ After setting a new version in `manifest.json`, run:
 python tools/package_extension.py
 ```
 
-This creates a runtime-only unsigned XPI and a source ZIP under `dist/`. Existing archives are never overwritten. The tracked 0.9.2 XPI is available for testing; other local archives are ignored by Git.
+This creates a runtime-only unsigned XPI and a source ZIP under `dist/`. Existing archives are never overwritten. The tracked 0.9.3 XPI is available for testing; other local archives are ignored by Git.
 
 Use the XPI for Mozilla signing, since it excludes development files and test fixtures. See Mozilla's [signing and distribution guide](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/).
 

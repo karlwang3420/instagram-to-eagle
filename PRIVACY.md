@@ -1,6 +1,6 @@
 # Privacy policy — Instagram to Eagle
 
-Last updated: September 16, 2026. Applies to version 0.9.2.
+Last updated: September 16, 2026. Applies to versions 0.9.2 and 0.9.3.
 
 Instagram to Eagle is maintained by [karlwang3420](https://github.com/karlwang3420). It saves media you choose on Instagram to the Eagle application on your computer. The extension has no developer-operated server, analytics, advertising, or automatic error reporting. The developer does not receive your saved media, Instagram credentials, or browsing history through the extension.
 

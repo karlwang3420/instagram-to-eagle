@@ -56,7 +56,7 @@ module.exports=async({evaluate,send,ig,popup,delay,screenshot})=>{
   // synthetic activation does not satisfy permissions.request. Model the native
   // approval boundary only; real revocation and background preflight ran above.
   await evaluate(popup,`window.nativeContains=browser.permissions.contains;window.bgNativeContains=bg.browser.permissions.contains;browser.permissions.request=async spec=>{window.requestedOrigins=spec.origins;browser.permissions.contains=async p=>p.origins.every(x=>EagleAccess.origins.includes(x));bg.browser.permissions.contains=async p=>p.origins.every(x=>EagleAccess.origins.includes(x));await bg.updateAccessBadge();return true;};true`);
-  await click('#grantAccess');await waitFor(`document.getElementById('grantAccess').hidden && document.getElementById('connection').textContent==='Eagle 4.0.0 connected'`);
+  await click('#grantAccess');await waitFor(`document.getElementById('grantAccess').hidden && document.getElementById('connection').textContent==='Eagle connected'`);
   assert.deepEqual(JSON.parse(await evaluate(popup,'JSON.stringify(requestedOrigins)')),['https://www.instagram.com/*','https://instagram.com/*','http://127.0.0.1/*']);
   assert.equal(await evaluate(popup,`(async()=>(await EagleAccess.state()).ready)()`),true);
   await waitFor(`(async()=>(await browser.action.getBadgeText({}))==='')()`);
@@ -66,7 +66,7 @@ module.exports=async({evaluate,send,ig,popup,delay,screenshot})=>{
   await capture('setup-ready.png');
   // Render exactly the compact popup CSS without changing its markup or scripts.
   await evaluate(popup,`document.body.classList.remove('setup-page');document.getElementById('accessPanel').hidden=true;true`);
-  await capture('menu-0.9.0.png',true);
+  await capture('menu.png',true);
   assert.ok(await evaluate(popup,'document.body.getBoundingClientRect().height')<600,'Popup fits without scrolling');
   assert.equal(await evaluate(popup,`document.querySelector('.sheet').scrollWidth<=380`),true);
   console.log('PASS compact menu has no horizontal overflow and fits below 600px; setup and compact screenshots captured');

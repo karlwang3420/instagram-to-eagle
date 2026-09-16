@@ -2,6 +2,12 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
+## 0.9.3
+
+- Simplified the popup and setup copy, removing decorative and repeated text.
+- Kept connection status, folder selection, tag controls, and error feedback in a more compact layout.
+- Included the MIT license in the extension package and prepared English publication materials.
+
 ## 0.9.2
 
 - Replaced the extension and popup icon with transparent PNGs at 16, 32, 48, 96, and 128 px.

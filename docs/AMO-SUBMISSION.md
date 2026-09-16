@@ -1,4 +1,4 @@
-# AMO listing — Instagram to Eagle 0.9.2
+# AMO listing — Instagram to Eagle 0.9.3
 
 Copy the text below into the existing AMO entry. The tested extension ID remains `instagram-to-eagle@local.karl`; creating a second add-on is unnecessary.
 
@@ -86,17 +86,17 @@ The manifest currently declares `data_collection_permissions.required: ["none"]`
 - Screenshot 2: [Connection setup](store-assets/setup.png).
 - Captions and capture details: [store assets](store-assets/README.md).
 
-These screenshots show the actual 0.9.2 interface rendered by the Firefox test fixture, with example local-library data. They do not show private Instagram content or claim a live import.
+These screenshots show the actual 0.9.3 interface rendered by the Firefox test fixture, with example local-library data. They do not show private Instagram content or claim a live import.
 
 ## Version and reviewer notes
 
 Use [AMO-REVIEWER-NOTES.md](AMO-REVIEWER-NOTES.md) for the technical review field. Add any required test-account credentials only in AMO's private reviewer notes, never to this repository.
 
-Suggested 0.9.2 release note:
+Suggested 0.9.3 release note:
 
-Updated the extension and popup icons with transparent PNG assets for clearer display at different sizes.
+Simplified the popup and setup text, with a more compact layout for connection status, folders, and tag controls. Included the MIT license.
 
-The existing 0.9.2 XPI remains unchanged. Its SHA-256 and validation results are in [RELEASE-CHECKS.md](RELEASE-CHECKS.md). Editing listing text does not require replacing the tested package. If a manifest or runtime change becomes necessary, create a new version and test that new artifact.
+Version 0.9.3 contains the popup cleanup requested after the publisher tested 0.9.2. Test the new XPI on live Instagram before submitting it through **Upload New Version** on the existing entry. The original 0.9.2 package is retained. The new artifact's SHA-256 and automated validation results are in [RELEASE-CHECKS.md](RELEASE-CHECKS.md).
 
 ## Final account-only steps
 

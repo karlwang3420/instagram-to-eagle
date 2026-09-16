@@ -313,7 +313,7 @@ async function clickControl(context, kind = 'media', code = 'B') {
     await send('script.evaluate', { expression: '(async()=>{await browser.tabs.update(igTab.id,{active:true});await browser.action.openPopup();return true})()', target: { context: popup }, awaitPromise: true, userActivation: true });
     await delay(1000);
     const popupState = JSON.parse(await evaluate(popup, `JSON.stringify(browser.extension.getViews({type:'popup'}).map(v=>({connection:v.document.getElementById('connection')?.textContent,hasDownload:!!v.document.querySelector('.actions'),folder:!!v.document.getElementById('folder'),tags:v.document.querySelectorAll('.tag-options input:checked').length})))`));
-    assert.equal(popupState.length,1);assert.equal(popupState[0].connection,'Eagle 4.0.0 connected');
+    assert.equal(popupState.length,1);assert.equal(popupState[0].connection,'Eagle connected');
     assert.equal(popupState[0].hasDownload,false);assert.equal(popupState[0].folder,true);assert.equal(popupState[0].tags,3);
     const rejected=await evaluate(popup,`browser.extension.getViews({type:'popup'})[0].request({type:'save',token:p.token,mode:'reel'}).catch(e=>e.message)`);
     assert.match(rejected,/buttons on Instagram/);

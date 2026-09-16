@@ -103,10 +103,9 @@ def prepare() -> None:
         "dist/reviewed-runtime-rebuilt.xpi. ZIP timestamps and therefore the overall "
         "archive hash may differ; member contents must match. The helper uses only "
         "the Python standard library and refuses to overwrite an existing output.\n\n"
-        "The source archive also includes later publication documentation and the "
-        "publisher's MIT license. These are not changes to the tested runtime. "
-        "The normal packaging script includes LICENSE in future XPI builds; the "
-        "review reconstruction follows the original XPI member list exactly.\n\n"
+        "The source archive also includes publication documentation and the "
+        "publisher's MIT license. The review reconstruction follows the submitted "
+        "XPI member list exactly, including LICENSE when present.\n\n"
         f"Original XPI SHA-256: `{digest(original)}`\n"
     ).encode()
     write_archive(outputs[0], source)

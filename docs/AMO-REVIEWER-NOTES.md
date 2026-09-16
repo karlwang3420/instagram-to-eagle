@@ -1,4 +1,4 @@
-# Reviewer notes — Instagram to Eagle 0.9.2
+# Reviewer notes — Instagram to Eagle 0.9.3
 
 Publisher: `karlwang3420`
 
@@ -24,7 +24,7 @@ Instagram credentials are not included in the public repository or submission bu
 6. Hover or focus a profile-grid thumbnail and click its download control. It should save that post, including its carousel items when present.
 7. Open an accessible Reel and save it using its playback-area download control.
 8. Open an account with currently available Stories. Try the current-Story action, then the account-Story action. These tests require unexpired media available to the test account.
-9. Select a different Eagle folder in the popup and switch tag categories off. Save another item and verify the destination and tags. Turning off the Creator tag does not remove the creator's username from the title.
+9. Select a different Eagle folder in the popup and switch tag categories off. Save another item and verify the destination and tags. Turning off the Creator username tag does not remove the creator's username from the title.
 10. Close Eagle and try again. The extension should show a connection error. Reopen Eagle and use Retry Eagle connection. Revoke localhost permission in Firefox and confirm imports are blocked until access is restored.
 
 "Sent to Eagle" confirms acceptance of the request by Eagle; the completed download must be checked in Eagle. Instagram layouts and direct media availability can change. Unsupported segmented streams and incomplete batches fail with an error.
@@ -55,4 +55,4 @@ The matching source archive contains the runtime files plus current documentatio
 
 ## Validation
 
-The publisher confirmed a fresh installation and manual testing of 0.9.2. Automated verification includes 59 passing unit tests and a passing Firefox 156 setup/settings suite. That suite verifies real permission revocation, simulates the native approval/denial boundary, and mocks Eagle imports. Its screenshots use example local-library data. See [RELEASE-CHECKS.md](RELEASE-CHECKS.md) for the exact artifact hash and linter result.
+The publisher confirmed a fresh installation and manual testing of 0.9.2. The subsequent 0.9.3 popup cleanup has automated verification including 59 passing unit tests and a passing Firefox 156 setup/settings suite. That suite verifies real permission revocation, simulates the native approval/denial boundary, and mocks Eagle imports. Its screenshots use example local-library data. See [RELEASE-CHECKS.md](RELEASE-CHECKS.md) for the exact artifact hash and linter result.

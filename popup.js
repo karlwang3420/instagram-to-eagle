@@ -18,13 +18,13 @@ function paintAccess(access) {
     $(id).textContent = granted ? 'Allowed' : 'Needed'; $(id).classList.toggle('allowed', granted);
   }
   $('grantAccess').hidden = access.ready;
-  $('accessHeading').textContent = access.ready ? 'Access is ready.' : 'Connect your collection.';
-  $('accessDescription').textContent = access.ready ? 'Both connections are allowed. Your collection stays in your Eagle library.' : 'Allow these two connections to save directly to Eagle.';
-  $('accessStatus').textContent = access.ready ? 'Access is ready. Keep Eagle open, then reload Instagram to show the download buttons.' : 'Firefox will ask you to confirm. You can change access in Firefox at any time.';
+  $('accessHeading').textContent = access.ready ? 'Access ready' : 'Access needed';
+  $('accessDescription').textContent = access.ready ? 'Instagram and Eagle access are enabled.' : 'Allow access to save Instagram media to Eagle.';
+  $('accessStatus').textContent = access.ready ? 'Keep Eagle open and reload Instagram.' : 'Firefox will ask you to confirm.';
   $('accessStatus').classList.remove('error');
 }
 async function checkEagle() {
-  try { const data = await request({type:'status'}); $('connection').textContent = 'Eagle ' + data.version + ' connected'; $('light').className = 'online'; return true; }
+  try { await request({type:'status'}); $('connection').textContent = 'Eagle connected'; $('light').className = 'online'; return true; }
   catch (e) { $('connection').textContent = 'Eagle is unavailable'; $('light').className = 'offline'; status(e.message, true); return false; }
 }
 async function folders() {
@@ -54,7 +54,7 @@ async function refresh() {
       $('connection').textContent = 'Permission needed to connect Eagle'; $('light').className = 'offline';
       status('Choose Allow access above to finish setup.'); return;
     }
-    status(access.instagram ? 'Save with the download buttons on Instagram.' : 'Allow Instagram access above, then reload Instagram.');
+    status(access.instagram ? '' : 'Allow Instagram access above, then reload Instagram.');
     if (await checkEagle()) await folders();
     else {folderReady=false;$('folder').disabled=true;}
   } catch (e) { status(e.message, true); }
@@ -68,7 +68,7 @@ function saveSettings(event) {
   const change = key === 'folder' ? {folderId:$('folder').value} : {[key]:$(key).checked};
   $('settingsStatus').textContent = 'Saving…';
   saveQueue = saveQueue.then(() => browser.storage.local.set(change)).then(() => {
-    $('settingsStatus').textContent = 'Preferences saved';
+    $('settingsStatus').textContent = 'Saved';
   }).catch(e => {$('settingsStatus').textContent = 'Could not save';status(e.message,true);});
 }
 $('grantAccess').addEventListener('click', async () => {
@@ -92,7 +92,7 @@ browser.permissions.onRemoved.addListener(refresh);
   try {
     const settings = await browser.storage.local.get(Object.fromEntries(tagKeys.map(key => [key,true])));
     tagKeys.forEach(key => {$(key).checked=settings[key] !== false;$(key).disabled=false;});
-    $('settingsStatus').textContent = 'Preferences saved';
+    $('settingsStatus').textContent = '';
   } catch (e) { $('settingsStatus').textContent = 'Could not load preferences';status(e.message,true); }
   await refresh();
 })();
