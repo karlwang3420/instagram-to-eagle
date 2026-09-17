@@ -11,7 +11,7 @@ function fixture(granted=[]) {
       storage:{local:{get:async defaults=>defaults}},
       runtime:{id:'test',getURL:p=>'moz-extension://test/'+p,onMessage:event('message'),onInstalled:event('installed')},
       tabs:{create:async x=>tabs.push(x),onRemoved:event('tabRemoved')}}});
-  for(const file of ['access.js','background.js']) vm.runInContext(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),c);
+  for(const file of ['background/access.js','background/index.js']) vm.runInContext(fs.readFileSync(path.join(__dirname,'../..',file),'utf8'),c);
   return {c,grants,fetches,tabs,badges,listeners};
 }
 test('missing localhost grant rejects GET and POST before any Eagle request',async()=>{
@@ -32,10 +32,10 @@ test('install opens first-run setup; granted updates stay quiet; revoked updates
 });
 test('setup tab can only query settings services; arbitrary extension tabs and imports are rejected',async()=>{
   const f=fixture(['http://127.0.0.1/*']);
-  const sender={id:'test',url:'moz-extension://test/popup.html?setup=1',tab:{id:1},frameId:0};
+  const sender={id:'test',url:'moz-extension://test/popup/popup.html?setup=1',tab:{id:1},frameId:0};
   assert.equal((await f.listeners.message({type:'status'},sender)).ok,true);
   assert.equal((await f.listeners.message({type:'save'},sender)).ok,false);
-  for(const s of [{...sender,id:'other'},{...sender,url:'https://www.instagram.com/'},{...sender,url:'moz-extension://test/popup.html'},{...sender,frameId:1}]) {
+  for(const s of [{...sender,id:'other'},{...sender,url:'https://www.instagram.com/'},{...sender,url:'moz-extension://test/popup/popup.html'},{...sender,frameId:1}]) {
     assert.equal(f.listeners.message({type:'status'},s),undefined);
   }
 });

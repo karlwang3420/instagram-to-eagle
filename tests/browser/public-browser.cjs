@@ -2,8 +2,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');const path=require('node:path');
 module.exports=async({evaluate,send,ig,popup,delay,screenshot})=>{
   const base='moz-extension://353c8f5f-334f-48b0-8ff5-80f36bda6801/';
-  assert.equal(await evaluate(popup,`(async()=>!!(await browser.tabs.query({})).find(t=>t.url===browser.runtime.getURL('popup.html?setup=1')))()`),true,'First install opens setup');
-  await send('browsingContext.navigate',{context:popup,url:base+'popup.html?setup=1',wait:'complete'});
+  assert.equal(await evaluate(popup,`(async()=>!!(await browser.tabs.query({})).find(t=>t.url===browser.runtime.getURL('popup/popup.html?setup=1')))()`),true,'First install opens setup');
+  await send('browsingContext.navigate',{context:popup,url:base+'popup/popup.html?setup=1',wait:'complete'});
   await evaluate(popup,`(async()=>{const tab=await browser.tabs.getCurrent();await browser.tabs.update(tab.id,{active:true});return true;})()`);
   await evaluate(popup,`(async()=>{window.bg=await browser.runtime.getBackgroundPage();bg.uiRequests=[];bg.fetch=async(url,opts)=>{bg.uiRequests.push({url,method:opts?.method});if(opts?.method==='POST')bg.testPayload=JSON.parse(opts.body);return new Response(JSON.stringify({status:'success',data:String(url).includes('/api/folder/list')?[{id:'F1',name:'References',children:[]}]:{version:'4.0.0'}}));};await refresh();return true;})()`);
   const waitFor=async expression=>{for(let i=0;i<60;i++){if(await evaluate(popup,expression))return;await delay(100);}assert.fail(await evaluate(popup,`document.body.innerText`));};
@@ -13,10 +13,10 @@ module.exports=async({evaluate,send,ig,popup,delay,screenshot})=>{
   };
   const capture=async(name,compact=false)=>{
     if(!screenshot)return;
-    const markup=await evaluate(popup,`(()=>{const clone=document.querySelector('.sheet').cloneNode(true);for(const input of clone.querySelectorAll('input')){input.toggleAttribute('checked',document.getElementById(input.id).checked);}for(const option of clone.querySelectorAll('select option')){option.toggleAttribute('selected',option.value===document.getElementById('folder').value);}clone.querySelector('img').src=${JSON.stringify('data:image/png;base64,'+fs.readFileSync(path.join(__dirname,'../icons/icon-48.png')).toString('base64'))};return clone.outerHTML;})()`);
+    const markup=await evaluate(popup,`(()=>{const clone=document.querySelector('.sheet').cloneNode(true);for(const input of clone.querySelectorAll('input')){input.toggleAttribute('checked',document.getElementById(input.id).checked);}for(const option of clone.querySelectorAll('select option')){option.toggleAttribute('selected',option.value===document.getElementById('folder').value);}clone.querySelector('img').src=${JSON.stringify('data:image/png;base64,'+fs.readFileSync(path.join(__dirname,'../../icons/icon-48.png')).toString('base64'))};return clone.outerHTML;})()`);
     // Firefox BiDi cannot screenshot privileged extension scopes. Render the
     // actual menu DOM/state + exact packaged CSS in the isolated fixture tab.
-    await evaluate(ig,`(()=>{document.head.innerHTML='';document.body.innerHTML=${JSON.stringify(markup)};document.body.className=${JSON.stringify(compact?'':'setup-page')};const style=document.createElement('style');style.textContent=${JSON.stringify(fs.readFileSync(path.join(__dirname,'../popup.css'),'utf8'))};document.head.append(style);document.getElementById('instagram-eagle-status')?.remove();return true;})()`);
+    await evaluate(ig,`(()=>{document.head.innerHTML='';document.body.innerHTML=${JSON.stringify(markup)};document.body.className=${JSON.stringify(compact?'':'setup-page')};const style=document.createElement('style');style.textContent=${JSON.stringify(fs.readFileSync(path.join(__dirname,'../../popup/popup.css'),'utf8'))};document.head.append(style);document.getElementById('instagram-eagle-status')?.remove();return true;})()`);
     await send('browsingContext.activate',{context:ig});
     await send('browsingContext.setViewport',{context:ig,viewport:{width:900,height:1100}});
     await delay(200);

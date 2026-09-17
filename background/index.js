@@ -29,7 +29,7 @@ async function selection(tabId, contextMenu = false) {
   let reply;
   try { reply = await browser.tabs.sendMessage(tabId, { type: "eagle:select", contextMenu }); }
   catch {
-    await browser.scripting.executeScript({ target: { tabId }, files: ["carousel-dom.js", "content.js", "profile-controls.js"] });
+    await browser.scripting.executeScript({ target: { tabId }, files: browser.runtime.getManifest().content_scripts[0].js });
     reply = await browser.tabs.sendMessage(tabId, { type: "eagle:select", contextMenu });
   }
   if (!reply?.ok) throw new Error(reply?.error || "Could not identify the post.");
@@ -145,8 +145,8 @@ browser.runtime.onMessage.addListener((message, sender) => {
       return save(tab.id, reply.context, message.mode);
     })().then(data => ({ ok: true, data }), e => ({ ok: false, error: e.message }));
   }
-  const popup = sender.url === browser.runtime.getURL('popup.html') && !sender.tab;
-  const setup = sender.url === browser.runtime.getURL('popup.html?setup=1') && sender.frameId === 0;
+  const popup = sender.url === browser.runtime.getURL('popup/popup.html') && !sender.tab;
+  const setup = sender.url === browser.runtime.getURL('popup/popup.html?setup=1') && sender.frameId === 0;
   if (sender.id !== browser.runtime.id || (!popup && !setup)) return undefined;
   if (!['status','folders'].includes(message.type)) return Promise.resolve({ok:false,error:'Use the download buttons on Instagram.'});
   return route(message).then(data => ({ ok: true, data }), e => ({ ok: false, error: e.message }));
@@ -166,7 +166,7 @@ async function installed(details) {
   const access = await updateAccessBadge();
   // First-run guidance, or an update needing grants. Normal updates stay quiet.
   if (details.reason === 'install' || (details.reason === 'update' && !access.ready)) {
-    await browser.tabs.create({url: browser.runtime.getURL('popup.html?setup=1')});
+    await browser.tabs.create({url: browser.runtime.getURL('popup/popup.html?setup=1')});
   }
 }
 browser.runtime.onInstalled.addListener(details => { installed(details).catch(console.error); });

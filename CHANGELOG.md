@@ -2,6 +2,21 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
+## 0.9.12
+
+- Added a grey circular background to Explore and search-grid hover controls, matching the timeline button.
+
+## 0.9.11
+
+- Anchored Explore and search-grid hover download icons to the bottom-right of each media item; other grids retain their placement.
+
+## 0.9.10
+
+- Bound native action detection to its own post and exclude hidden bookmark controls.
+- Centralized control detection and shared UI, and organized source by browser execution context.
+- Added control-ownership regressions, one complete test command, and Eagle mocking from browser startup.
+- Added packaging coverage for nested runtime files and test sources.
+
 ## 0.9.9
 
 - Fixed permalink-wrapped timeline media being mistaken for a grid tile and receiving the centered hover control.

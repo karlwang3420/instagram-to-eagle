@@ -4,7 +4,7 @@ const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 function fixture(post){
   const root={href:'https://www.instagram.com/p/A/',querySelectorAll:()=>[],__reactProps$fixture:{post}};
   const c=vm.createContext({URL,AbortSignal,setTimeout,clearTimeout,Node:class{},location:{hostname:'www.instagram.com'},window:{},document:{querySelector:()=>root,querySelectorAll:()=>[]}});
-  for(const file of ['core.js','extractor.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),c);
+  for(const file of ['shared/core.js','page/posts.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../..',file),'utf8'),c);
   return c;
 }
 

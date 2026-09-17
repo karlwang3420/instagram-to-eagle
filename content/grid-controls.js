@@ -1,17 +1,10 @@
 /* Linked post tiles share one hover UI; privileged actions originate in trusted clicks. */
 (() => {
   if (globalThis.EagleProfileControls) return;
-  const linkInfo=a=>{
-    try {const u=new URL(a.href);const m=u.pathname.match(/^\/(?:[\w.]+\/)?(p|reel|reels)\/([\w-]+)\/?$/);
-      return u.origin===location.origin&&m?{code:m[2],url:`https://www.instagram.com/${m[1]==='p'?'p':'reel'}/${m[2]}/`}:null;
-    } catch {return null;}
-  };
-  const isGridMedia=el=>{
-    const a=el.closest('a[href]');
-    return !!a&&!a.closest('header')&&!globalThis.EagleUI?.hasNativePostActions(a)&&!!linkInfo(a)&&[...a.querySelectorAll('img,video')].some(media=>{
-      const r=media.getBoundingClientRect();return r.width>=100&&r.height>=100;
-    });
-  };
+  const Detection = globalThis.EagleDetection;
+  const UI = globalThis.EagleUI;
+  if (!Detection || !UI) throw new Error('Eagle detection and UI must load before grid controls.');
+  const { linkInfo, isGridMedia } = Detection;
   const tiles=new Map(),intents=new Map();let timer=null;
   let pointer=null,hoverFrame=null,lastLayout=null,lastLayoutOwner=null,lastLayoutTime=0,lastLayoutPath='';
   function layoutSnapshot(a){
@@ -41,14 +34,11 @@
   document.addEventListener('pointerout',e=>{if(!e.relatedTarget){pointer=null;scheduleHover();}},{capture:true,passive:true});
   window.addEventListener('blur',()=>{pointer=null;scheduleHover();});
   document.addEventListener('scroll',scheduleHover,{capture:true,passive:true});
-  const toast=(text,failed=false)=>globalThis.EagleUI?.toast(text,failed);
+  const toast=UI.toast;
   globalThis.EagleProfileControls={isGridMedia};
   const make=(tag,text)=>{const e=document.createElement(tag);if(text)e.textContent=text;return e;};
   const button=(text,label)=>{const b=make('button',text);b.type='button';b.title=label||text;b.setAttribute('aria-label',label||text);return b;};
-  const downloadIcon=()=>{
-    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');
-    const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d','M12 3v12m-5-5 5 5 5-5M3 15v5a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-5');svg.append(path);return svg;
-  };
+  const downloadIcon=UI.downloadIcon;
   const styles=`button{all:unset;box-sizing:border-box;cursor:pointer;font:inherit}button:focus-visible{outline:2px solid #a8ccff;outline-offset:3px;border-radius:4px}button:disabled{opacity:.45;cursor:wait}`;
   function removeTile(a,record) {
     record.host.remove();
@@ -72,18 +62,23 @@
     if(record.media!==media||record.frame!==frame){record.resize.disconnect();record.resize.observe(media);if(frame!==media)record.resize.observe(frame);record.media=media;record.frame=frame;}
     if(record.host.parentElement!==a)a.append(record.host);
     record.host.hidden=false;
-    const r=frame.getBoundingClientRect(),parent=record.host.offsetParent;
+    const bottomRight=/^\/explore(?:\/|$)/.test(location.pathname);
+    record.host.toggleAttribute('data-corner',bottomRight);
+    const r=(bottomRight?media:frame).getBoundingClientRect(),parent=record.host.offsetParent;
     if(!parent){record.host.hidden=true;return;}
     record.host.setAttribute('data-eagle-anchor','stable-tile');
-    const y=r.height*.7;
+    record.host.style.transform=bottomRight?'translate(-100%,-100%)':'translate(-50%,-50%)';
+    const x=bottomRight?r.right:r.left+r.width/2;
+    const y=bottomRight?r.bottom:r.top+r.height*.7;
+    const inset=bottomRight?8:0;
     const s=getComputedStyle(parent);
     if(parent===document.body&&s.position==='static'&&s.transform==='none'&&s.perspective==='none'&&!/(layout|paint|strict|content)/.test(s.contain)){
-      record.host.style.left=(r.left+scrollX+r.width/2)+'px';record.host.style.top=(r.top+scrollY+y)+'px';return;
+      record.host.style.left=(x+scrollX-inset)+'px';record.host.style.top=(y+scrollY-inset)+'px';return;
     }
     const p=parent.getBoundingClientRect();
     const sx=p.width/parent.offsetWidth||1,sy=p.height/parent.offsetHeight||1;
-    record.host.style.left=((r.left-p.left+r.width/2)/sx-parent.clientLeft+parent.scrollLeft)+'px';
-    record.host.style.top=((r.top-p.top+y)/sy-parent.clientTop+parent.scrollTop)+'px';
+    record.host.style.left=((x-p.left)/sx-parent.clientLeft+parent.scrollLeft-inset)+'px';
+    record.host.style.top=((y-p.top)/sy-parent.clientTop+parent.scrollTop-inset)+'px';
   }
   function mountTile(a) {
     if(tiles.has(a)){positionTile(a,tiles.get(a));return;}
@@ -91,6 +86,7 @@
     host.style.cssText='position:absolute;width:38px;height:38px;box-sizing:border-box;margin:0;padding:0;transform:translate(-50%,-50%);z-index:4;display:block';
     const shadow=host.attachShadow({mode:'closed'}),style=make('style');
     style.textContent=styles+`:host{opacity:0;pointer-events:none}:host([data-visible]),:host([data-keyboard-focus]){opacity:1;pointer-events:auto}button{display:grid;place-items:center;width:38px;height:38px;color:white;filter:drop-shadow(0 1px 3px #0009)}button:hover{opacity:.75}svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}@media(hover:none){:host{opacity:1;pointer-events:auto}}`;
+    style.textContent+=`:host([data-corner]) button{border-radius:50%;background:#242626;filter:none}:host([data-corner]) button:hover:enabled{background:#3a3c3c;opacity:1}:host([data-corner]) svg{width:24px;height:24px}`;
     const b=button('','Save all images and videos from this post to Eagle');b.append(downloadIcon());shadow.append(style,b);
     b.addEventListener('focus',()=>host.toggleAttribute('data-keyboard-focus',b.matches(':focus-visible')));
     b.addEventListener('blur',()=>host.removeAttribute('data-keyboard-focus'));
@@ -127,9 +123,11 @@
     for(const orphan of document.querySelectorAll('[data-eagle-profile-all],[data-eagle-profile-dialog]'))orphan.remove();
   }
   const schedule=()=>{if(!timer)timer=setTimeout(refresh,180);};
-  new MutationObserver(records=>{if(records.some(r=>!(r.target instanceof Element&&r.target.closest('[data-eagle-profile-all],[data-eagle-profile-tile],[data-eagle-profile-dialog],#instagram-eagle-status'))))schedule();})
-    .observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['href','src','class','hidden']});
+  new MutationObserver(records=>{if(records.some(r=>!(r.target instanceof Element&&r.target.closest(UI.ownedSelector))))schedule();})
+    .observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['href','src','class','hidden','inert','aria-hidden','aria-label','style','width','height']});
   window.addEventListener('resize',schedule,{passive:true});
+  let lastPath=location.pathname;
+  setInterval(()=>{if(lastPath!==location.pathname){lastPath=location.pathname;schedule();}},500);
   browser.runtime.onMessage.addListener(message=>{
     if(message.type==='eagle:profile-layout'){
       const visible=[...document.querySelectorAll('a[href]')].filter(a=>{

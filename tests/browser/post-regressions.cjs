@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict');
-module.exports=async({evaluate,send,ig,popup,delay})=>{
-  const wait=async expr=>{for(let i=0;i<50;i++){if(await evaluate(ig,expr))return;await delay(100);}assert.fail(expr);};
+module.exports=async({evaluate,send,ig,popup,delay,waitFor})=>{
+  const wait=expr=>waitFor(ig,expr);
   const click=async selector=>{
     const r=JSON.parse(await evaluate(ig,`JSON.stringify(document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().toJSON())`));
     await send('input.performActions',{context:ig,actions:[{type:'pointer',id:'regression-mouse',parameters:{pointerType:'mouse'},actions:[
@@ -23,7 +23,7 @@ module.exports=async({evaluate,send,ig,popup,delay})=>{
   assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-group]').length`),1);
   assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-control="media"]:not([hidden])').length`),1);
   await evaluate(popup,'bg.testPayload=null;true');
-  await click('[data-eagle-control="all"]:not([hidden])');await delay(1200);
+  await click('[data-eagle-control="all"]:not([hidden])');await waitFor(popup,'bg.testPayload!==null');
   const saved=JSON.parse(await evaluate(popup,'JSON.stringify(bg.testPayload)'));
   assert.equal(saved.items.length,2);assert.ok(saved.items.every(x=>!x.url.includes('comment')));
   assert.equal(saved.items[1].url,'https://v.cdninstagram.com/selected.mp4');
@@ -48,7 +48,7 @@ module.exports=async({evaluate,send,ig,popup,delay})=>{
     };true`);
   await wait(`document.querySelectorAll('[data-eagle-profile-tile]').length===1`);await delay(300);
   await evaluate(popup,'bg.testPayload=null;true');
-  await click('[data-eagle-profile-tile]');await delay(1500);
+  await click('[data-eagle-profile-tile]');await waitFor(popup,'bg.testPayload!==null');
   const gridSaved=JSON.parse(await evaluate(popup,'JSON.stringify(bg.testPayload)'));
   assert.equal(gridSaved?.items?.length,2,await evaluate(ig,`document.getElementById('instagram-eagle-status')?.textContent`));
   assert.equal(gridSaved.items[1].url,'https://v.cdninstagram.com/selected.mp4');
@@ -73,7 +73,7 @@ module.exports=async({evaluate,send,ig,popup,delay})=>{
         throw new Error('No module');
       };true`);
     await delay(300);await evaluate(popup,'bg.testPayload=null;true');
-    await click('[data-eagle-profile-tile]');await delay(1500);
+    await click('[data-eagle-profile-tile]');await waitFor(popup,'bg.testPayload!==null');
     const longSaved=JSON.parse(await evaluate(popup,'JSON.stringify(bg.testPayload)'));
     assert.equal(await evaluate(ig,'infoPath'),expectedPath,'Extended URL must not be decoded as a 39-character media ID');
     assert.equal(longSaved?.items?.length,2,await evaluate(ig,`document.getElementById('instagram-eagle-status')?.textContent`));

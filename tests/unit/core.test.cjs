@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-require('../core.js');
+require('../../shared/core.js');
 const C = globalThis.EagleCore;
 const image = (id, extra = {}) => ({ pk: id, media_type: 1, image_versions2: { candidates: [{ url: `https://s.cdninstagram.com/${id}.jpg`, width: 1080, height: 1350 }, { url: `https://s.cdninstagram.com/${id}-small.jpg`, width: 320, height: 400 }] }, ...extra });
 const video = { pk: 'v', media_type: 2, video_versions: [{ url: 'https://v.cdninstagram.com/reel.mp4', width: 1080, height: 1920 }], has_audio: true };

@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-module.exports = async function({evaluate,send,ig,popup,delay,screenshot}) {
+module.exports = async function({evaluate,send,ig,popup,delay,screenshot,waitFor}) {
   const img=pk=>({pk,media_type:1,image_versions2:{candidates:[{url:`https://s.cdninstagram.com/${pk}.jpg`}]}});
   const vid=(pk,url)=>({pk,media_type:2,image_versions2:img('shared-poster').image_versions2,video_versions:[{url}]});
   const post={code:'MIX',media_type:8,carousel_media_count:5,user:{username:'artist'},caption:{text:'Mixed #test'},
@@ -24,8 +24,8 @@ module.exports = async function({evaluate,send,ig,popup,delay,screenshot}) {
     const r=JSON.parse(await evaluate(ig,`JSON.stringify([...document.querySelectorAll('[data-eagle-control="${kind}"][data-eagle-post="${code}"]')].find(el=>!el.hidden).getBoundingClientRect().toJSON())`));
     await evaluate(popup,'bg.testPayload=null;true');
     await send('input.performActions',{context:ig,actions:[{type:'pointer',id:'structural-mouse',parameters:{pointerType:'mouse'},actions:[{type:'pointerMove',x:Math.round(r.left+18),y:Math.round(r.top+18),duration:0},{type:'pointerDown',button:0},{type:'pointerUp',button:0}]}]});
-    let payload=null;
-    for(let n=0;n<50&&!payload;n++) { await delay(100);payload=JSON.parse(await evaluate(popup,'JSON.stringify(bg.testPayload)')); }
+    await waitFor(popup,'bg.testPayload!==null');
+    const payload=JSON.parse(await evaluate(popup,'JSON.stringify(bg.testPayload)'));
     assert.ok(payload,await evaluate(ig,`document.getElementById('instagram-eagle-status')?.textContent || 'No import or status from click'`));
     return payload;
   };

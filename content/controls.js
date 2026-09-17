@@ -8,98 +8,14 @@
   const toolbars = new Map();
   let inlineBusy = false;
   let storyOwner = null;
-  const storyRoute = () => {
-    const route = location.pathname.match(/^\/stories\/([\w.]+)(?:\/(\d+))?\/?$/);
-    return route && !['highlights','archive'].includes(route[1].toLowerCase()) ? route : null;
-  };
-  const playbackLabel = /^(play|pause|mute|unmute|turn (?:on|off) sound|sound (?:on|off)|播放|暫停|暂停|靜音|静音|取消靜音|取消静音|開啟音效|關閉音效|开启声音|关闭声音|音效|音量)$/i;
-  function nativePlayback(root) {
-    return [...root.querySelectorAll('button,[role="button"],svg[aria-label]')].filter(el => !el.closest('[data-eagle-group],[data-eagle-control]'))
-      .map(el => ({ el: el.closest('button,[role="button"]') || el, label: el.getAttribute('aria-label') || el.querySelector('[aria-label]')?.getAttribute('aria-label') || '' }))
-      .filter(({el,label}) => playbackLabel.test(label.trim()) && visibleRect(el))
-      .map(({el}) => el).filter((el,i,list) => list.indexOf(el) === i);
-  }
-  function largeMedia(root) {
-    return [...root.querySelectorAll('img,video')].filter(el => {
-      const r = el.getBoundingClientRect(); return r.width >= 140 && r.height >= 140 && visibleRect(el);
-    });
-  }
-  function findStoryRoot() {
-    const route = storyRoute();
-    if (!route) return null;
-    const playback = nativePlayback(document);
-    const authorLinks = [...document.querySelectorAll('a[href]')].filter(a => {
-      const path = new URL(a.href).pathname;
-      return visibleRect(a) && (path.toLowerCase() === `/${route[1].toLowerCase()}/` || path === `/stories/${route[1]}/${route[2] ? route[2] + '/' : ''}`);
-    });
-    // The active card is identified by its account/header, not by the largest
-    // image on the page. Its video can be much shorter than the full story card.
-    for (const seed of [...authorLinks, ...playback]) {
-      for (let p = seed.parentElement; p && !p.matches('body,html'); p = p.parentElement) {
-        if (!largeMedia(p).length) continue;
-        if (!authorLinks.some(a => p.contains(a)) && authorLinks.length) break;
-        if (playback.some(b => p.contains(b))) return p;
-      }
-    }
-    // Do not guess a neighboring account when the active card is not identifiable.
-    return null;
-  }
-  const postPattern = /\/(?:p|reels?)\/([\w-]+)\/?(?:[?#]|$)/;
-  function postLinks(root) {
-    return [...root.querySelectorAll('a[href]')].filter(a => postPattern.test(a.href));
-  }
-  function source(root) {
-    if (storyRoute() && root === storyOwner) return location.href;
-    const links = postLinks(root);
-    return links.find(a => a.querySelector("time"))?.href || links[0]?.href || (postPattern.test(location.href) ? location.href : null);
-  }
-  function rootFor(el) {
-    if (!(el instanceof Element)) return null;
-    if (globalThis.EagleProfileControls?.isGridMedia(el)) return null;
-    if (storyRoute()) return storyOwner?.contains(el) ? storyOwner : null;
-    // Use one owner for the whole post, not a different inner wrapper per slide.
-    // An ancestor containing another post's permalink is a hard boundary.
-    let owner = null;
-    for (let node = el, i = 0; node && i < 30; i++, node = node.parentElement) {
-      if (node.matches("body,main")) break;
-      const codes = new Set(postLinks(node).map(a => a.href.match(postPattern)[1]));
-      if (codes.size > 1) break;
-      if (codes.size === 1 && [...node.querySelectorAll("img,video")].some(m => {
-        const r = m.getBoundingClientRect(); return r.width >= 140 && r.height >= 140;
-      })) {
-        owner = node;
-        // The media and native bookmark action must belong to the same post.
-        // This is the stable owner for both image and nested video slides.
-        if (bookmarkControl(node)) return node;
-        // Video slides can be wrapped in a nested article with the same
-        // permalink. Continue to the shared post owner, otherwise photo and
-        // video slides create independent toolbars for one mixed carousel.
-      }
-    }
-    if (owner) return owner;
-    if (postPattern.test(location.href)) {
-      const root = el.closest('[role="dialog"]') || document.querySelector("main");
-      if (root && new Set(postLinks(root).map(a => a.href.match(postPattern)[1])).size <= 1) return root;
-    }
-    return null;
-  }
-  function visibleRect(el, boundary = null) {
-    let r = el.getBoundingClientRect();
-    // A current slide belongs to its carousel even when scrolled off-screen.
-    const bounds = boundary ? boundary.getBoundingClientRect() : { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
-    let box = { left: Math.max(bounds.left, r.left), top: Math.max(bounds.top, r.top), right: Math.min(bounds.right, r.right), bottom: Math.min(bounds.bottom, r.bottom) };
-    for (let p = el; p; p = p.parentElement) {
-      const s = getComputedStyle(p);
-      if (s.display === "none" || s.visibility === "hidden" || s.contentVisibility === "hidden" || s.opacity === "0" || p.hidden || p.inert || p.getAttribute("aria-hidden") === "true") return 0;
-      if (p !== el && /(hidden|clip|scroll|auto)/.test(s.overflow + s.overflowX + s.overflowY)) {
-        const b = p.getBoundingClientRect();
-        if (/(hidden|clip|scroll|auto)/.test(s.overflowX)) { box.left = Math.max(box.left, b.left); box.right = Math.min(box.right, b.right); }
-        if (/(hidden|clip|scroll|auto)/.test(s.overflowY)) { box.top = Math.max(box.top, b.top); box.bottom = Math.min(box.bottom, b.bottom); }
-      }
-      if (p === boundary) break;
-    }
-    return Math.max(0, box.right - box.left) * Math.max(0, box.bottom - box.top);
-  }
+  const Detection = globalThis.EagleDetection;
+  const UI = globalThis.EagleUI;
+  if (!Detection || !UI) throw new Error('Eagle detection and UI must load before post controls.');
+  const { postPattern, storyRoute, visibleRect, nativePlayback, largeMedia, findStoryRoot, bookmarkControl } = Detection;
+  const source = root => Detection.source(root, storyOwner);
+  const rootFor = element => Detection.rootFor(element, { storyOwner });
+  const toast = UI.toast;
+  const { downloadPath, batchPath } = UI;
   function postMedia(root) {
     return [...root.querySelectorAll("img,video")].filter(el => {
       const r = el.getBoundingClientRect();
@@ -231,56 +147,6 @@
       if (restorationNote) toast(restorationNote);
     }
   }
-  let dismissToast = null;
-  function toast(text, failed = false) {
-    dismissToast?.();
-    document.getElementById("instagram-eagle-status")?.remove();
-    const box = document.createElement("div"); box.id = "instagram-eagle-status";
-    box.style.cssText = 'all:initial;position:fixed;inset:auto 16px 16px auto;z-index:2147483647;display:block;width:max-content;max-width:min(320px,calc(100vw - 32px));box-sizing:border-box;color-scheme:dark';
-    const shadow = box.attachShadow({ mode: 'closed' });
-    const style = document.createElement('style');
-    style.textContent = `
-      .notice{display:flex;align-items:flex-start;gap:9px;padding:11px 10px 11px 12px;border:1px solid #ffffff24;border-radius:10px;background:#232627;color:#f0f1f1;box-shadow:0 4px 18px #0003;font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;animation:eagle-notice-in 140ms ease-out}
-      .status{width:17px;height:17px;flex:none;margin-top:1px;color:${failed ? '#f0ac9c' : '#a5d5b7'}}
-      .message{min-width:0;flex:1;overflow-wrap:anywhere;max-height:min(240px,50vh);overflow:auto}
-      button{all:unset;display:grid;place-items:center;box-sizing:border-box;flex:none;width:24px;height:24px;margin:-3px -3px -3px 1px;border-radius:5px;color:#a5abad;cursor:pointer}
-      button:hover{color:#fff;background:#ffffff12}button:focus-visible{outline:2px solid #a5d5b7;outline-offset:1px}
-      button svg{width:14px;height:14px}svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-      @keyframes eagle-notice-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-      @media(prefers-reduced-motion:reduce){.notice{animation:none}}
-    `;
-    const notice = document.createElement('div'); notice.className = 'notice';
-    const icon = (path, className) => {
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true');
-      if (className) svg.setAttribute('class', className);
-      const shape = document.createElementNS('http://www.w3.org/2000/svg', 'path'); shape.setAttribute('d', path); svg.append(shape);
-      return svg;
-    };
-    const message = document.createElement('div'); message.className = 'message';
-    message.setAttribute('role', 'status'); message.setAttribute('aria-live', 'polite'); message.setAttribute('aria-atomic', 'true');
-    message.append(document.createElement('slot'));
-    const close = document.createElement('button'); close.type = 'button';
-    close.setAttribute('aria-label', 'Dismiss Eagle notification');
-    close.append(icon('M6 6l12 12M18 6 6 18'));
-    notice.append(icon(failed ? 'M12 8v5m0 3h.01M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18' : 'M5 12l4 4L19 6', 'status'), message, close);
-    shadow.append(style, notice);
-    let timer, hovering = false, focused = false;
-    const dismiss = () => { clearTimeout(timer); box.remove(); if (dismissToast === dismiss) dismissToast = null; };
-    const arm = () => { clearTimeout(timer); if (!hovering && !focused) timer = setTimeout(dismiss, failed ? 8000 : 3000); };
-    close.addEventListener('click', e => { e.stopPropagation(); dismiss(); });
-    box.addEventListener('pointerenter', () => { hovering = true; clearTimeout(timer); });
-    box.addEventListener('pointerleave', () => { hovering = false; arm(); });
-    box.addEventListener('focusin', () => { focused = true; clearTimeout(timer); });
-    box.addEventListener('focusout', () => { focused = false; arm(); });
-    dismissToast = dismiss;
-    document.documentElement.append(box);
-    // Populate the live region after mounting; remote text is never treated as HTML.
-    box.textContent = String(text);
-    arm();
-  }
-  const downloadPath = "M12 3v12m-5-5 5 5 5-5M3 15v5a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-5";
-  const batchPath = "M7 3h12a2 2 0 0 1 2 2v12M5 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Zm5 3v8m-3-3 3 3 3-3";
   const controlsFor = record => [record.media,record.all,...record.slideControls.values()];
   function iconControl(kind, record, slideElement = null) {
     const host = document.createElement("div"); host.setAttribute("data-eagle-control", kind);
@@ -354,17 +220,6 @@
       if (r.width <= bounds.width + 8 && r.width >= 140 && r.height >= 140 && (!existingHost || !p.contains(existingHost))) anchor = p;
     }
     return anchor.matches('img,video') ? anchor.parentElement : anchor;
-  }
-  function bookmarkControl(root) {
-    const labels = /^(save|saved|unsave|remove from saved|儲存|已儲存|取消儲存|保存|已保存|收藏|已收藏|取消收藏|저장|저장됨|保存済み|enregistrer|enregistré|guardar|guardado|speichern|gespeichert)$/i;
-    const bookmarkShape = 'svg polygon[points="20 21 12 13.44 4 21 4 3 20 3 20 21"],svg path[d="M20 22a.999.999 0 0 1-.687-.273L12 14.815l-7.313 6.912A1 1 0 0 1 3 21V3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1Z"]';
-    for (const el of root.querySelectorAll('svg[aria-label],button[aria-label],[role="button"][aria-label],'+bookmarkShape)) {
-      if (el.closest('[data-eagle-control],[data-eagle-group]')) continue;
-      if (!labels.test((el.getAttribute("aria-label") || '').trim()) && !el.matches(bookmarkShape)) continue;
-      const control = el.closest('button,[role="button"]') || el;
-      if (control.getBoundingClientRect().width) return control;
-    }
-    return null;
   }
   function bookmarkSlot(control, root) {
     if (!control) return null;
@@ -552,17 +407,13 @@
   new MutationObserver(records => {
     if (records.some(record => {
       // Ignore our own styles/labels so mounting never creates a refresh loop.
-      if (record.target instanceof Element && record.target.closest('[data-eagle-control],[data-eagle-group]')) return false;
-      if (record.type === 'attributes' && ['style','class','width','height'].includes(record.attributeName)) {
-        // Pagination class changes and slide-track transforms affect selection.
-        // Skip only styles patched by us to avoid a self-triggering loop.
-        if (record.attributeName === 'style' && [...toolbars.values()].some(t=>[t,...controlsFor(t)].some(c=>c.patches?.some(p=>p.el===record.target)))) return false;
-        return true;
-      }
+      if (record.target instanceof Element && record.target.closest(UI.ownedSelector)) return false;
+      // Style patches are applied only when a mount changes. A follow-up scan
+      // settles them; future Instagram visibility changes must remain observable.
       return true;
     })) scheduleToolbars();
   }).observe(document.documentElement, { childList: true, subtree: true, attributes: true,
-    attributeFilter: ['href','src','srcset','aria-hidden','aria-label','aria-selected','aria-current','aria-posinset','role','hidden','style','class','width','height'] });
+    attributeFilter: ['href','src','srcset','aria-hidden','aria-label','aria-selected','aria-current','aria-posinset','role','hidden','inert','style','class','width','height'] });
   document.addEventListener("scroll", scheduleToolbars, { capture: true, passive: true });
   document.addEventListener("click", scheduleToolbars, true);
   document.addEventListener("transitionend", scheduleToolbars, true);
@@ -574,11 +425,6 @@
   window.addEventListener("resize", scheduleToolbars, { passive: true });
   let lastPath = location.pathname;
   setInterval(() => { if (location.pathname !== lastPath) { lastPath = location.pathname; startStoryEntry(); } }, 500);
-  globalThis.EagleUI = {toast,hasNativePostActions:el=>{
-    for(let node=el,depth=0;node&&depth<20&&!node.matches('main,body');node=node.parentElement,depth++)
-      if(bookmarkControl(node))return true;
-    return false;
-  }};
   startStoryEntry();
   document.addEventListener("pointerover", e => { const root = rootFor(e.target); if (root) hovered = root; }, true);
   document.addEventListener("contextmenu", e => { rightClicked = rootFor(e.target); }, true);

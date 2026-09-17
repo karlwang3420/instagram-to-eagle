@@ -10,19 +10,21 @@ After editing, click **Reload** beside the add-on and reload your Instagram tabs
 
 ## Tests
 
-Run the unit tests with Node.js:
+Run every unit and browser suite with Node.js 22+, Python 3.10+, and desktop Firefox 153+:
 
 ```sh
-node --test tests/core.test.cjs tests/stories.test.cjs tests/profile.test.cjs tests/extractor.test.cjs tests/access.test.cjs
+node tests/run.cjs
 ```
 
-The Firefox integration runner requires Node 22+, desktop Firefox 153+, and Eagle running:
+Each browser suite starts with an isolated Firefox profile. Instagram and Eagle requests are mocked before the extension is installed; Eagle does not need to be running. The suite never imports into your library. Set `FIREFOX_BIN` for a nonstandard Firefox installation.
+
+For a fast unit-only check:
 
 ```sh
-node tests/firefox.integration.cjs --inline --binding
+node --test tests/unit/*.test.cjs
 ```
 
-Focused suites use the same runner:
+Focused browser suites use `node tests/firefox.integration.cjs` with one of these flags:
 
 | Flag | Coverage |
 | --- | --- |
@@ -31,8 +33,9 @@ Focused suites use the same runner:
 | `--post-regressions` | Post links, complete-post lookup, and duplicate controls |
 | `--profile-only` | Profile controls, settings, and mixed-media imports |
 | `--toast-only` | Notifications, dismissal, keyboard access, and narrow layouts |
+| `--detection-only` | Post boundaries, hidden native controls, ownership changes, and cleanup |
 
-The runner creates an isolated headless Firefox profile under `work/` and saves screenshots there. It mocks Instagram responses and Eagle import requests, and only reads the running Eagle app's version. Set `FIREFOX_BIN` if Firefox is installed outside the default location.
+The base flow uses `--inline --binding` and also exercises the structural carousel suite. The all-suite command runs that flow plus every focused suite. Screenshots are saved under `work/`; temporary browser profiles are removed after Firefox exits. Import assertions wait for results with bounded timeouts instead of assuming a fixed response time.
 
 Passing fixtures do not establish compatibility with every live Instagram layout. For 0.9.3, all 59 unit tests passed. The owner confirmed a fresh Firefox installation and manual testing of the preceding 0.9.2 on September 16, 2026; live manual testing of 0.9.3 is still needed. The Firefox 156 setup/settings suite also passed when run outside the Windows execution sandbox; the earlier `DiscardedBrowsingContextError` did not recur. That suite verifies real permission revocation, but simulates the native approval/denial boundary and mocks Eagle imports. The owner's report is not an agent-observed test of every supported media type or operating system.
 
@@ -62,14 +65,20 @@ The manifest and popup reference the generated files in `icons/`.
 
 | File | Responsibility |
 | --- | --- |
-| `content.js` | On-page controls, media targeting, and carousel collection |
-| `carousel-dom.js` | Carousel structure and slide selection |
-| `profile-controls.js` | Profile-grid download controls |
-| `extractor.js` | Post metadata and media lookup |
-| `stories.js` | Active-account Story lookup and selection |
-| `core.js` | Normalized media, metadata, and Eagle payloads |
-| `background.js`, `access.js` | Local Eagle bridge and permission checks |
-| `popup.*` | Setup, connection status, folders, and tag settings |
+| `content/detection.js` | Shared post ownership, surface classification, and native-control recognition |
+| `content/controls.js`, `content/grid-controls.js` | Timeline/player and linked-tile controls |
+| `content/ui.js` | Shared notification UI and icon definitions |
+| `content/carousel-dom.js` | Carousel structure and slide selection |
+| `page/posts.js`, `page/stories.js` | On-demand extraction in Instagram's page context |
+| `shared/core.js` | Pure media normalization, metadata, and Eagle payloads |
+| `background/index.js`, `background/access.js` | Privileged messaging, import orchestration, Eagle transport, permissions |
+| `popup/` | Setup, connection status, folders, and tag settings |
+| `tests/unit/`, `tests/browser/` | Pure logic checks and Firefox behavior suites |
+| `tests/fixtures/`, `tests/helpers/` | Local page fixtures and browser test infrastructure |
+
+The manifest defines script dependency order. Recovery injection reads that same list, so it cannot silently omit a new content module. `page/posts.js` and `page/stories.js` are serialized into the page with `scripting.executeScript`; keep them self-contained rather than referencing extension globals. Packaging includes nested runtime and test files, with a unit check for missing resources.
+
+Control detection owns the distinction between linked tiles and posts with native action rows. Renderers consume that decision; they do not call each other to determine ownership. Native labels and icon shapes are evidence only within the same post boundary. Hidden controls are rejected, while controls below the viewport remain valid owners.
 
 Media lookup uses Instagram's page data and on-demand same-origin requests. Story lookup can use the page-side `PolarisInstapi.apiGet` client, with fallback endpoints when unavailable. These undocumented interfaces can change.
 

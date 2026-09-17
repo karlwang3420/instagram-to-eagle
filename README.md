@@ -65,6 +65,8 @@ Read the [privacy policy](PRIVACY.md) for details about network requests, local 
 
 Clone this repository and load `manifest.json` through **Load Temporary Add-on…**. No build step or runtime dependencies are required.
 
+Run `node tests/run.cjs` for all unit and Firefox browser suites. Tests use local fixtures and mocked Eagle imports; Eagle does not need to be running.
+
 See the [development guide](docs/DEVELOPMENT.md) for testing, packaging, and icon generation, and the [changelog](CHANGELOG.md) for version history.
 
 ## License

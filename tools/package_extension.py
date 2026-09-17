@@ -10,17 +10,19 @@ VERSION = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))["vers
 RUNTIME = [
     "manifest.json",
     "LICENSE",
-    "popup.html",
-    "popup.js",
-    "popup.css",
-    "access.js",
-    "core.js",
-    "extractor.js",
-    "stories.js",
-    "background.js",
-    "carousel-dom.js",
-    "content.js",
-    "profile-controls.js",
+    "popup/popup.html",
+    "popup/popup.js",
+    "popup/popup.css",
+    "background/access.js",
+    "shared/core.js",
+    "page/posts.js",
+    "page/stories.js",
+    "background/index.js",
+    "content/detection.js",
+    "content/ui.js",
+    "content/carousel-dom.js",
+    "content/controls.js",
+    "content/grid-controls.js",
     *(f"icons/icon-{size}.png" for size in (16, 32, 48, 96, 128)),
 ]
 SOURCE = RUNTIME + [
@@ -36,12 +38,13 @@ SOURCE = RUNTIME + [
     *(str(path.relative_to(ROOT)).replace("\\", "/")
       for path in sorted((ROOT / "docs").rglob("*")) if path.is_file()),
     *(str(path.relative_to(ROOT)).replace("\\", "/")
-      for path in sorted((ROOT / "tests").iterdir()) if path.is_file()),
+      for path in sorted((ROOT / "tests").rglob("*")) if path.is_file()),
 ]
 
 
 def build(name: str, paths: list[str]) -> Path:
     output = ROOT / "dist" / name
+    output.parent.mkdir(exist_ok=True)
     if output.exists():
         raise FileExistsError(f"Refusing to replace existing build: {output}")
     for relative in paths:

@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-module.exports=async({evaluate,send,ig,popup,delay,screenshot,profileNetwork})=>{
+module.exports=async({evaluate,send,ig,popup,delay,screenshot,profileNetwork,waitFor})=>{
   const img=(code,id=code)=>({code,pk:id,media_type:1,user:{username:'artist'},caption:{text:'Profile #art'},image_versions2:{candidates:[{url:`https://s.cdninstagram.com/${code}.jpg`,width:1200,height:1600}]}});
   const mixed={...img('MIX'),media_type:8,carousel_media_count:2,carousel_media:[img('FIRST'),{media_type:2,video_versions:[{url:'https://v.cdninstagram.com/profile-video.mp4',width:1080,height:1920}]}]};
   await send('browsingContext.activate',{context:ig});
@@ -12,7 +12,7 @@ module.exports=async({evaluate,send,ig,popup,delay,screenshot,profileNetwork})=>
     window.require=name=>{if(name==='PolarisConfig')return {getIGAppID:()=> '123456'};if(name==='PolarisWWWClaim')return {getWWWClaim:()=> 'test-session-claim'};if(name!=='PolarisInstapi')throw new Error('Unexpected module');return {apiGet:async(path,options)=>{if(!path.includes('/media/'))throw new Error('Unsupported Polaris endpoint');return {data:{items:[profileMixed]}};}}};
     window.fetch=()=>{throw new Error('Page fetch is wrapped and unavailable');};true`);
   profileNetwork.pages=JSON.parse(await evaluate(ig,'JSON.stringify(profilePages)'));
-  const wait=async expr=>{for(let i=0;i<60;i++){if(await evaluate(ig,expr))return;await delay(100);}assert.fail(expr);};
+  const wait=expr=>waitFor(ig,expr);
   const click=async(selector,dx=18,dy=18)=>{
     const r=JSON.parse(await evaluate(ig,`JSON.stringify(document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().toJSON())`));
     await send('input.performActions',{context:ig,actions:[{type:'pointer',id:'profile-mouse',parameters:{pointerType:'mouse'},actions:[{type:'pointerMove',x:Math.round(r.x+dx),y:Math.round(r.y+dy),duration:0},{type:'pause',duration:100},{type:'pointerDown',button:0},{type:'pointerUp',button:0}]}]});
@@ -50,7 +50,7 @@ module.exports=async({evaluate,send,ig,popup,delay,screenshot,profileNetwork})=>
   assert.equal(diagnostic.ok,true);assert.equal(diagnostic.layout.schema,1);assert.ok(diagnostic.layout.tree.length>1);
   assert.ok(!/https:|PRIVATE-|test-session-claim|artist|MIX/.test(JSON.stringify(diagnostic)));
   await screenshot('profile-hover-firefox.png');
-  await click('#tile [data-eagle-profile-tile]');await delay(1200);
+  await click('#tile [data-eagle-profile-tile]');await waitFor(popup,'bg.profilePayloads.length===1');
   let payloads=JSON.parse(await evaluate(popup,'JSON.stringify(bg.profilePayloads)'));
   assert.equal(payloads.length,1,await evaluate(ig,`document.getElementById('instagram-eagle-status')?.textContent`));assert.equal(payloads[0].items.length,2);assert.equal(payloads[0].items[1].url,'https://v.cdninstagram.com/profile-video.mp4');
   assert.equal(await evaluate(ig,'openedPost'),0);assert.equal(await evaluate(ig,'location.pathname'),'/artist/');
@@ -71,7 +71,12 @@ module.exports=async({evaluate,send,ig,popup,delay,screenshot,profileNetwork})=>
     await delay(150);
     assert.equal(await evaluate(ig,`getComputedStyle(document.querySelector('#tile [data-eagle-profile-tile]')).opacity`),'1');
     assert.equal(await evaluate(ig,`(()=>{const a=document.querySelector('#tile').getBoundingClientRect(),b=document.querySelector('#tile [data-eagle-profile-tile]').getBoundingClientRect();return b.left>=a.left&&b.right<=a.right&&b.top>=a.top&&b.bottom<=a.bottom;})()`),true);
-    const before=payloads.length;await click('#tile [data-eagle-profile-tile]');await delay(1200);
+    const placement=JSON.parse(await evaluate(ig,`JSON.stringify((()=>{const m=document.querySelector('#tile img').getBoundingClientRect(),b=document.querySelector('#tile [data-eagle-profile-tile]').getBoundingClientRect();return {right:m.right-b.right,bottom:m.bottom-b.bottom,center:b.x+b.width/2-m.x-m.width/2};})())`));
+    if(route.startsWith('/explore/')){
+      assert.ok(Math.abs(placement.right-8)<1,route);assert.ok(Math.abs(placement.bottom-8)<1,route);
+      if(route==='/explore/')await screenshot('explore-hover-firefox.png');
+    }else assert.ok(Math.abs(placement.center)<1,route);
+    const before=payloads.length;await click('#tile [data-eagle-profile-tile]');await waitFor(popup,`bg.profilePayloads.length===${before+1}`);
     payloads=JSON.parse(await evaluate(popup,'JSON.stringify(bg.profilePayloads)'));
     assert.equal(payloads.length,before+1);assert.equal(payloads.at(-1).items.length,2);
     assert.equal(payloads.at(-1).items[1].url,'https://v.cdninstagram.com/profile-video.mp4');
@@ -98,6 +103,18 @@ module.exports=async({evaluate,send,ig,popup,delay,screenshot,profileNetwork})=>
   await click('#tile [data-eagle-profile-tile]');await screenshot('profile-hover-contained-firefox.png');
   await evaluate(ig,`document.getElementById('cell').style.width='190px';document.getElementById('media-wrap').style.width='190px';document.getElementById('cell').style.transform='scale(.85)';true`);await delay(500);await checkLayout();
   console.log('PASS thumbnail-centered placement under wide static links, native stat dimensions unchanged, resize and transformed ancestor');
+
+  // Reuse the same DOM across SPA navigation. Explore anchors to the media,
+  // including letterboxing and transformed ancestors, rather than the tile frame.
+  await evaluate(ig,`window.routeIcon=document.querySelector('[data-eagle-profile-tile]');document.querySelector('#tile img').style.height='150px';history.pushState({},'','/explore/search/keyword/?q=art');true`);
+  await wait(`(()=>{const m=document.querySelector('#tile img').getBoundingClientRect(),b=routeIcon.getBoundingClientRect();return Math.abs(m.right-b.right-8*.85)<1&&Math.abs(m.bottom-b.bottom-8*.85)<1;})()`);
+  await evaluate(ig,`document.getElementById('media-wrap').style.width='160px';true`);
+  await wait(`(()=>{const m=document.querySelector('#tile img').getBoundingClientRect(),b=routeIcon.getBoundingClientRect();return Math.abs(m.right-b.right-8*.85)<1&&Math.abs(m.bottom-b.bottom-8*.85)<1;})()`);
+  await evaluate(ig,`history.pushState({},'','/artist/');true`);
+  await wait(`(()=>{const m=document.getElementById('cell').getBoundingClientRect(),b=routeIcon.getBoundingClientRect();return Math.abs(b.x+b.width/2-m.x-m.width/2)<1&&Math.abs(b.y+b.height/2-m.y-m.height*.7)<1;})()`);
+  assert.equal(await evaluate(ig,`routeIcon===document.querySelector('[data-eagle-profile-tile]')`),true);
+  await evaluate(ig,`document.getElementById('media-wrap').style.width='190px';true`);
+  console.log('PASS Explore bottom-right media anchor follows resize and SPA navigation while profile placement is restored');
 
   // Native overlay presence/size must NEVER change the icon coordinate space.
   await evaluate(ig,`window.stableIcon=document.querySelector('[data-eagle-profile-tile]');window.iconBefore=stableIcon.getBoundingClientRect().toJSON();true`);
@@ -143,7 +160,7 @@ module.exports=async({evaluate,send,ig,popup,delay,screenshot,profileNetwork})=>
   await wait(`document.querySelectorAll('#inline-tile [data-eagle-profile-tile]').length===1`);
   assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-profile-tile]').length`),1);
   assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-control],[data-eagle-group]').length`),0);
-  const before=await evaluate(popup,'bg.profilePayloads.length');await click('#inline-tile [data-eagle-profile-tile]');await delay(1200);
+  const before=await evaluate(popup,'bg.profilePayloads.length');await click('#inline-tile [data-eagle-profile-tile]');await waitFor(popup,`bg.profilePayloads.length===${before+1}`);
   payloads=JSON.parse(await evaluate(popup,'JSON.stringify(bg.profilePayloads)'));
   assert.equal(payloads.length,before+1,await evaluate(ig,`JSON.stringify({status:document.getElementById('instagram-eagle-status')?.textContent,openedPost,opacity:getComputedStyle(document.querySelector('#inline-tile [data-eagle-profile-tile]')).opacity})`));assert.equal(payloads.at(-1).items.length,2);
   assert.equal(payloads.at(-1).items[1].url,'https://v.cdninstagram.com/profile-video.mp4');

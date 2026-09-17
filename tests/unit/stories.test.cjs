@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
-const source = fs.readFileSync(path.join(__dirname, '../stories.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../../page/stories.js'), 'utf8');
 const owner = {pk:'42', username:'artist'};
 const image = pk => ({pk, media_type:1, image_versions2:{candidates:[{url:`https://s.cdninstagram.com/${pk}.jpg`}]}});
 const video = pk => ({pk, media_type:2, video_versions:[{url:`https://v.cdninstagram.com/${pk}.mp4`}]});

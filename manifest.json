@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Instagram to Eagle",
-  "version": "0.9.9",
+  "version": "0.9.12",
   "description": "Save Instagram posts, profile grids, Reels and Stories to Eagle with a short title, source link and tags.",
   "browser_specific_settings": {
     "gecko": {
@@ -26,11 +26,11 @@
   ],
   "background": {
     "scripts": [
-      "access.js",
-      "core.js",
-      "extractor.js",
-      "stories.js",
-      "background.js"
+      "background/access.js",
+      "shared/core.js",
+      "page/posts.js",
+      "page/stories.js",
+      "background/index.js"
     ]
   },
   "content_scripts": [
@@ -40,16 +40,18 @@
         "https://instagram.com/*"
       ],
       "js": [
-        "carousel-dom.js",
-        "content.js",
-        "profile-controls.js"
+        "content/detection.js",
+        "content/ui.js",
+        "content/carousel-dom.js",
+        "content/controls.js",
+        "content/grid-controls.js"
       ],
       "run_at": "document_idle"
     }
   ],
   "action": {
     "default_title": "Instagram to Eagle",
-    "default_popup": "popup.html",
+    "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png",

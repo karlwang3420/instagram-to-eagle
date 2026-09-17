@@ -2,17 +2,16 @@ const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
+const { createFirefoxProfile, removeFirefoxProfile, stopFirefox } = require('./helpers/firefox-process.cjs');
+const { startEagleProxy } = require('./helpers/eagle-proxy.cjs');
+const { parseIntegrationArgs } = require('./helpers/integration-args.cjs');
 const work = path.resolve(__dirname, '../work');
-fs.mkdirSync(work, { recursive: true });
-const addonArgument = process.argv.slice(2).find(arg => !arg.startsWith('--'));
-const addon = path.resolve(addonArgument || path.join(__dirname, '..'));
+const options = parseIntegrationArgs(process.argv.slice(2), path.join(__dirname, '..'));
+const addon = path.resolve(options.addon);
 const delay = ms => new Promise(r => setTimeout(r, ms));
-const testProfile = fs.mkdtempSync(path.join(work, 'firefox-run-'));
-fs.copyFileSync(path.join(__dirname, 'firefox-profile.js'), path.join(testProfile, 'user.js'));
-const port = 20000 + Math.floor(Math.random() * 10000);
 const firefox = process.env.FIREFOX_BIN || (process.platform === 'win32' ? 'C:/Program Files/Mozilla Firefox/firefox.exe' : 'firefox');
-const child = spawn(firefox, ['--headless', '--no-remote', '--profile', testProfile, '--remote-debugging-port', String(port), '--remote-allow-system-access', 'about:blank'], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
-let logs = ''; child.stderr.on('data', d => { logs += d; }); child.stdout.on('data', d => { logs += d; });
+let child, eagleProxy, testProfile;
+let logs = '';
 let ws, id = 0; const pending = new Map();
 const profileNetwork={pages:[],requests:[],status:200};
 function send(method, params = {}) {
@@ -33,7 +32,13 @@ async function waitFor(context, expression, timeout = 5000) {
     if (await evaluate(context, expression)) return;
     await delay(100);
   }
-  assert.fail('Timed out waiting for: ' + expression);
+  let diagnostic = 'page state unavailable';
+  try {
+    diagnostic = await evaluate(context, `JSON.stringify({url:location.href,status:document.getElementById('instagram-eagle-status')?.textContent||'',body:(document.body?.innerText||'').slice(-500)})`);
+  } catch (error) {
+    diagnostic = error.message;
+  }
+  assert.fail(`Timed out waiting for: ${expression}\nLast page state: ${diagnostic}`);
 }
 async function controlRect(context, kind = 'media', code = 'B') {
   return JSON.parse(await evaluate(context, `JSON.stringify(document.querySelector('[data-eagle-control="${kind}"][data-eagle-post="${code}"]').getBoundingClientRect().toJSON())`));
@@ -43,7 +48,19 @@ async function clickControl(context, kind = 'media', code = 'B') {
   await send('input.performActions',{context,actions:[{type:'pointer',id:'mouse',parameters:{pointerType:'mouse'},actions:[{type:'pointerMove',x:Math.round(r.right-18),y:Math.round(r.top+18),duration:0},{type:'pointerDown',button:0},{type:'pointerUp',button:0}]}]});
 }
 (async () => {
+  let failure;
   try {
+    eagleProxy = await startEagleProxy();
+    testProfile = createFirefoxProfile(work, path.join(__dirname, 'fixtures/firefox-profile.js'), {
+      'network.proxy.type': 1,
+      'network.proxy.http': '127.0.0.1',
+      'network.proxy.http_port': eagleProxy.port,
+      'network.proxy.no_proxies_on': '',
+      'network.proxy.allow_hijacking_localhost': true
+    });
+    const port = 20000 + Math.floor(Math.random() * 10000);
+    child = spawn(firefox, ['--headless', '--no-remote', '--profile', testProfile, '--remote-debugging-port', String(port), '--remote-allow-system-access', 'about:blank'], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    child.stderr.on('data', d => { logs += d; }); child.stdout.on('data', d => { logs += d; });
     for (let i = 0; i < 100; i++) {
       try { ws = new WebSocket(`ws://127.0.0.1:${port}/session`); await new Promise((r, j) => { ws.onopen = r; ws.onerror = j; }); break; }
       catch { if (i === 99) throw new Error('Firefox did not start: ' + logs.slice(-2000)); await delay(200); }
@@ -55,8 +72,9 @@ async function clickControl(context, kind = 'media', code = 'B') {
         data.type === 'error' ? p.reject(new Error(JSON.stringify(data))) : p.resolve(data.result);
       } else if (data.method === 'network.beforeRequestSent' && data.params.isBlocked) {
         const url = data.params.request.url;
+        const parsedURL = new URL(url);
         const api = url.includes('/api/v1/media/');
-        const cdn = new URL(url).hostname !== 'www.instagram.com';
+        const cdn = parsedURL.hostname !== 'www.instagram.com';
         const storyAPI = url.includes('/graphql/query/');
         const storyFeedAPI = /\/api\/v1\/feed\/user\/\d+\/story\//.test(url);
         const profileAPI = url.includes('/api/v1/users/web_profile_info/');
@@ -72,16 +90,17 @@ async function clickControl(context, kind = 'media', code = 'B') {
     };
     const session = await send('session.new', { capabilities: { alwaysMatch: { acceptInsecureCerts: true } } });
     console.log('Firefox:', session.capabilities.browserVersion);
-    const installed = await send('webExtension.install', { extensionData: { type: 'path', path: addon } });
-    assert.equal(installed.extension, 'instagram-to-eagle@local.karl'); console.log('PASS actual Firefox temporary extension installation');
     await send('session.subscribe', { events: ['network.beforeRequestSent'] });
     await send('network.addIntercept', { phases: ['beforeRequestSent'], urlPatterns: ['www.instagram.com','s.cdninstagram.com','v.cdninstagram.com'].map(hostname=>({type:'pattern',protocol:'https',hostname})) });
+    const installed = await send('webExtension.install', { extensionData: { type: 'path', path: addon } });
+    assert.equal(installed.extension, 'instagram-to-eagle@local.karl'); console.log('PASS actual Firefox temporary extension installation');
     const { context: ig } = await send('browsingContext.create', { type: 'tab' });
     await send('browsingContext.navigate', { context: ig, url: 'https://www.instagram.com/', wait: 'complete' });
     const { context: popup } = await send('browsingContext.create', { type: 'tab' });
-    await send('browsingContext.navigate', { context: popup, url: 'moz-extension://353c8f5f-334f-48b0-8ff5-80f36bda6801/popup.html', wait: 'complete' });
+    await send('browsingContext.navigate', { context: popup, url: 'moz-extension://353c8f5f-334f-48b0-8ff5-80f36bda6801/popup/popup.html', wait: 'complete' });
     const status = await evaluate(popup, `(async()=>{window.bg=await browser.runtime.getBackgroundPage(); const x=await bg.eagle('/api/application/info');return x.version})()`);
-    assert.equal(typeof status, 'string'); console.log('PASS extension host permission and CSP reach the actual Eagle API (read only)');
+    assert.equal(status, '4.0.0'); console.log('PASS extension host permission and CSP reach the mocked Eagle API');
+    assert.ok(eagleProxy.requests.some(request => request.path === '/api/application/info'));
     const preview = JSON.parse(await evaluate(popup, `(async()=>{const tabs=await browser.tabs.query({});window.igTab=tabs.find(t=>t.url==='https://www.instagram.com/');window.p=await bg.preview(igTab.id);return JSON.stringify(p)})()`));
     assert.equal(preview.author, 'artist'); assert.equal(preview.images, 2); assert.ok(preview.image.endsWith('/b.jpg'));
     console.log('PASS actual content script selects visible third slide and correct post');
@@ -97,47 +116,52 @@ async function clickControl(context, kind = 'media', code = 'B') {
     console.log('PASS all-images flow sends short titles, source links and automatic tags with blank annotations, excluding video and neighboring post');
     const currentPayload = JSON.parse(await evaluate(popup, `(async()=>{await bg.route({type:'save',token:p.token,mode:'current'});return JSON.stringify(bg.testPayload)})()`));
     assert.equal(currentPayload.items.length, 1); assert.equal(currentPayload.items[0].url, 'https://s.cdninstagram.com/b.jpg'); console.log('PASS current-image flow');
-    if(process.argv.includes('--public-only')) {
-      await require('./public-browser.cjs')({evaluate,send,ig,popup,delay,screenshot:async(name,clip,context=popup)=>{
+    if(options.suite === '--public-only') {
+      await require('./browser/public-browser.cjs')({evaluate,send,waitFor,ig,popup,delay,screenshot:async(name,clip,context=popup)=>{
         const shot=await send('browsingContext.captureScreenshot',{context,origin:'document',...(clip?{clip:{type:'box',...clip}}:{})});
         fs.writeFileSync(path.join(work,name),Buffer.from(shot.data,'base64'));
       }});
       console.log('ALL PUBLIC SETUP / SETTINGS CHECKS PASSED. Eagle imports were mocked.');
       return;
     }
-    if(process.argv.includes('--post-regressions')) {
-      await require('./post-regressions.cjs')({evaluate,send,ig,popup,delay});
+    if(options.suite === '--post-regressions') {
+      await require('./browser/post-regressions.cjs')({evaluate,send,waitFor,ig,popup,delay});
       console.log('ALL POST REGRESSION CHECKS PASSED. Eagle imports were mocked.');
       return;
     }
-    if(process.argv.includes('--profile-only')) {
-      await require('./profile-browser.cjs')({evaluate,send,ig,popup,delay,profileNetwork,screenshot:async name=>{
+    if(options.suite === '--profile-only') {
+      await require('./browser/profile-browser.cjs')({evaluate,send,waitFor,ig,popup,delay,profileNetwork,screenshot:async name=>{
         const shot=await send('browsingContext.captureScreenshot',{context:ig,origin:'viewport'});
         fs.writeFileSync(path.join(work,name),Buffer.from(shot.data,'base64'));
       }});
       console.log('ALL PROFILE CHECKS PASSED. Eagle imports were mocked.');
       return;
     }
-    if(process.argv.includes('--toast-only')) {
-      await require('./toast-browser.cjs')({evaluate,send,ig,popup,delay,screenshot:async name=>{
+    if(options.suite === '--toast-only') {
+      await require('./browser/toast-browser.cjs')({evaluate,send,waitFor,ig,popup,delay,screenshot:async name=>{
         const shot=await send('browsingContext.captureScreenshot',{context:ig,origin:'viewport'});
         fs.writeFileSync(path.join(work,name),Buffer.from(shot.data,'base64'));
       }});
       console.log('ALL NOTIFICATION CHECKS PASSED. Eagle imports were mocked.');
       return;
     }
-    if(process.argv.includes('--carousel-only')) {
-      await require('./carousel-browser.cjs')({evaluate,send,ig,popup,delay,screenshot:async name=>{
+    if(options.suite === '--carousel-only') {
+      await require('./browser/carousel-browser.cjs')({evaluate,send,waitFor,ig,popup,delay,screenshot:async name=>{
         const shot=await send('browsingContext.captureScreenshot',{context:ig,origin:'viewport'});
         fs.writeFileSync(path.join(work,name),Buffer.from(shot.data,'base64'));
       }});
       console.log('ALL STRUCTURAL CAROUSEL CHECKS PASSED. Eagle imports were mocked.');
       return;
     }
+    if(options.suite === '--detection-only') {
+      await require('./browser/detection-browser.cjs')({evaluate,send,waitFor,ig,popup,delay});
+      console.log('ALL DETECTION REGRESSION CHECKS PASSED. Eagle imports were mocked.');
+      return;
+    }
     const walked = JSON.parse(await evaluate(popup, `(async()=>{const ctx=await bg.selection(igTab.id);return JSON.stringify(await browser.tabs.sendMessage(igTab.id,{type:'eagle:carousel',marker:ctx.marker}))})()`));
     assert.equal(walked.ok, true); assert.deepEqual(walked.items.map(m=>m.type), ['image','video','image']);
     assert.equal(await evaluate(ig, 'window.slide'), 2); console.log('PASS carousel walk and restoration in Firefox');
-    if(process.argv.includes('--binding')) {
+    if(options.binding) {
       await send('browsingContext.activate',{context:ig});
       await evaluate(ig, `document.getElementById('post').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true}));document.querySelector('main').style.paddingBottom='1500px';window.scrollTo(0,document.getElementById('post').offsetHeight+150);true`);
       assert.ok(await evaluate(ig, `document.querySelector('#post .viewport').getBoundingClientRect().bottom<0`));
@@ -159,7 +183,7 @@ async function clickControl(context, kind = 'media', code = 'B') {
       await evaluate(ig,`document.getElementById('nested-post-link').remove();document.getElementById('rerender-owner').replaceWith(document.getElementById('post'));document.querySelector('main').style.paddingBottom='';true`);
       await delay(400);
     }
-    if (process.argv.includes('--inline')) {
+    if (options.inline) {
       await send('browsingContext.activate',{context:ig});
       await delay(400);
       assert.equal(await evaluate(ig, 'document.querySelectorAll("[data-eagle-control=media]").length'), 2);
@@ -298,7 +322,7 @@ async function clickControl(context, kind = 'media', code = 'B') {
     const reelPayload = JSON.parse(await evaluate(popup, `(async()=>{const p=await bg.preview(igTab.id);await bg.route({type:'save',token:p.token,mode:'reel'});return JSON.stringify(bg.testPayload)})()`));
     assert.equal(reelPayload.items[0].url, 'https://v.cdninstagram.com/reel.mp4'); assert.equal(reelPayload.items[0].website, 'https://www.instagram.com/reel/B/');
     console.log('PASS Reel flow resolves direct video behind a blob player');
-    if(process.argv.includes('--inline')) {
+    if(options.inline) {
       await send('browsingContext.activate',{context:ig});
       await delay(500);
       await evaluate(popup,'bg.testPayload=null;true');
@@ -363,11 +387,13 @@ async function clickControl(context, kind = 'media', code = 'B') {
     assert.equal(await evaluate(ig,`document.querySelectorAll('#story-neighbor [data-eagle-control]').length`),0);
     const storyShot=await send('browsingContext.captureScreenshot',{context:ig,origin:'viewport'});
     fs.writeFileSync(path.join(work,'stories-controls-firefox.png'),Buffer.from(storyShot.data,'base64'));
-    async function clickStory(kind) {
+    async function clickStory(kind, expectedError = null) {
       const r = await storyButton(kind);
       await evaluate(popup,'bg.testPayload=null;true');
+      await evaluate(ig,"document.getElementById('instagram-eagle-status')?.remove();true");
       await send('input.performActions',{context:ig,actions:[{type:'pointer',id:'mouse',parameters:{pointerType:'mouse'},actions:[{type:'pointerMove',x:Math.round(r.left+18),y:Math.round(r.top+18),duration:0},{type:'pointerDown',button:0},{type:'pointerUp',button:0}]}]});
-      await delay(1800);
+      if (expectedError) await waitFor(ig, `new RegExp(${JSON.stringify(expectedError)}).test(document.getElementById('instagram-eagle-status')?.textContent||'')`);
+      else await waitFor(popup, 'bg.testPayload!==null');
       return JSON.parse(await evaluate(popup,'JSON.stringify(bg.testPayload)'));
     }
     const currentStory = await clickStory('media');
@@ -392,7 +418,7 @@ async function clickControl(context, kind = 'media', code = 'B') {
     console.log('PASS account story endpoint resolves selected video when legacy GraphQL is unavailable');
     storyFeedReel=null;failStoryGraphQL=false;
     storyNetworkReels=[{id:'99',owner:{id:'99',username:'other'},items:storyItems}];
-    const rejectedStories = await clickStory('all');assert.equal(rejectedStories,null);
+    const rejectedStories = await clickStory('all', 'verify all stories');assert.equal(rejectedStories,null);
     assert.match(await evaluate(ig,`document.getElementById('instagram-eagle-status').textContent`),/verify all stories/);
     console.log('PASS unrelated account data is rejected without sending a partial Stories batch');
     await evaluate(ig,`history.pushState({},'','/stories/artist/101/');document.querySelector('#story-viewer video').outerHTML='<img width="460" height="520" src="https://s.cdninstagram.com/101.jpg">';true`);
@@ -408,11 +434,13 @@ async function clickControl(context, kind = 'media', code = 'B') {
     await evaluate(ig,`history.pushState({},'','/stories/hori_hayung/');document.querySelector('#story-viewer header a').href='/hori_hayung/';document.querySelector('#story-viewer header a').textContent='hori_hayung';document.querySelector('#story-viewer img').src='https://s.cdninstagram.com/202.jpg';document.getElementById('story-viewer').__reactProps$entry={reel:${JSON.stringify(entryReel)}};true`);
     await delay(900);
     assert.equal(await evaluate(ig,`document.querySelectorAll('#playback-row [data-eagle-post="story-hori_hayung"]').length`),2);
-    async function clickEntry(kind) {
+    async function clickEntry(kind, expectedError = null) {
       const r=JSON.parse(await evaluate(ig,`JSON.stringify(document.querySelector('[data-eagle-control="${kind}"][data-eagle-post="story-hori_hayung"]').getBoundingClientRect().toJSON())`));
       await evaluate(popup,'bg.testPayload=null;true');
+      await evaluate(ig,"document.getElementById('instagram-eagle-status')?.remove();true");
       await send('input.performActions',{context:ig,actions:[{type:'pointer',id:'mouse',parameters:{pointerType:'mouse'},actions:[{type:'pointerMove',x:Math.round(r.left+18),y:Math.round(r.top+18),duration:0},{type:'pointerDown',button:0},{type:'pointerUp',button:0}]}]});
-      await delay(1800);
+      if (expectedError) await waitFor(ig, `new RegExp(${JSON.stringify(expectedError)}).test(document.getElementById('instagram-eagle-status')?.textContent||'')`);
+      else await waitFor(popup, 'bg.testPayload!==null');
       return JSON.parse(await evaluate(popup,'JSON.stringify(bg.testPayload)'));
     }
     const entryImage=await clickEntry('media');
@@ -432,7 +460,7 @@ async function clickControl(context, kind = 'media', code = 'B') {
     assert.equal(entryPreview.url,'https://www.instagram.com/stories/hori_hayung/303/');
     console.log('PASS username-only blob-video Story resolves its ID from the selected media element; popup preserves the resolved source');
     await evaluate(ig,`delete document.querySelector('#story-viewer video').__reactProps$active;true`);
-    const ambiguous=await clickEntry('media');assert.equal(ambiguous,null);
+    const ambiguous=await clickEntry('media', 'Could not resolve');assert.equal(ambiguous,null);
     assert.match(await evaluate(ig,`document.getElementById('instagram-eagle-status').textContent`),/Could not resolve/);
     console.log('PASS ambiguous username-only blob player is rejected instead of choosing the first Story');
     // Real Firefox MAIN-world bridge, but the site's private request client is
@@ -458,7 +486,7 @@ async function clickControl(context, kind = 'media', code = 'B') {
     assert.deepEqual(apiAll.items.map(item=>item.website),['201','202','303'].map(id=>`https://www.instagram.com/stories/hori_hayung/${id}/`));
     console.log('PASS page-side account batch retains each Story source URL and includes video');
     await evaluate(ig,`document.querySelector('#story-viewer video').__reactFiber$player={memoizedProps:{}};true`);
-    const apiAmbiguous=await clickEntry('media');assert.equal(apiAmbiguous,null);
+    const apiAmbiguous=await clickEntry('media', 'Could not resolve');assert.equal(apiAmbiguous,null);
     console.log('PASS API list alone cannot cause current-Story action to import the first item');
     await evaluate(ig,`document.querySelector('#story-viewer video').__reactFiber$player={memoizedProps:{postId:'303'}};
       const stableRequire=window.require;
@@ -472,18 +500,29 @@ async function clickControl(context, kind = 'media', code = 'B') {
     assert.equal(apiAdvanced?.items?.[0]?.url,'https://v.cdninstagram.com/entry-story.mp4');
     assert.equal(apiAdvanced.items[0].website,'https://www.instagram.com/stories/hori_hayung/303/');
     console.log('PASS autoplay during Story API response does not retarget the pending import');
-    await require('./carousel-browser.cjs')({evaluate,send,ig,popup,delay,screenshot:async name=>{
+    await require('./browser/carousel-browser.cjs')({evaluate,send,waitFor,ig,popup,delay,screenshot:async name=>{
       const shot=await send('browsingContext.captureScreenshot',{context:ig,origin:'viewport'});
       fs.writeFileSync(path.join(work,name),Buffer.from(shot.data,'base64'));
     }});
     console.log('ALL FIREFOX INTEGRATION CHECKS PASSED. Eagle imports were mocked.');
+  } catch (error) {
+    failure = error;
+    throw error;
   } finally {
+    const cleanupErrors = [];
     if (ws?.readyState === WebSocket.OPEN) { try { await send('browser.close'); } catch {} ws.close(); }
-    child.kill();
+    if (child) try { await stopFirefox(child); } catch (error) { cleanupErrors.push(error); }
+    if (testProfile) try { await removeFirefoxProfile(testProfile, work); } catch (error) { cleanupErrors.push(error); }
+    if (eagleProxy) try { await eagleProxy.close(); } catch (error) { cleanupErrors.push(error); }
+    if (cleanupErrors.length) {
+      const details = cleanupErrors.map(error => `${error.name}: ${error.message}`).join('; ');
+      if (failure) console.error(`Cleanup also failed: ${details}`);
+      else throw new AggregateError(cleanupErrors, `Integration test cleanup failed: ${details}`);
+    }
   }
 })().catch(e => { console.error(e.stack); console.error(logs.slice(-1200)); process.exitCode = 1; });
-const fixtureHTML = fs.readFileSync(path.join(__dirname, 'fixture.html'), 'utf8');
-const fixture = process.argv.includes('--inline') ? fixtureHTML.replaceAll('<article','<div').replaceAll('</article>','</div>').replace('article{','#post,#neighbor{') : fixtureHTML;
+const fixtureHTML = fs.readFileSync(path.join(__dirname, 'fixtures/fixture.html'), 'utf8');
+const fixture = options.inline ? fixtureHTML.replaceAll('<article','<div').replaceAll('</article>','</div>').replace('article{','#post,#neighbor{') : fixtureHTML;
 const img = id => ({pk:id,media_type:1,image_versions2:{candidates:[{url:`https://s.cdninstagram.com/${id}.jpg`,width:1080,height:1350}]}});
 let fixturePost = { pk:'1',code:'B',media_type:8,carousel_media_count:3,user:{username:'artist'},caption:{text:'Full caption #illustration #設計'},carousel_media:[img('a'),{media_type:2,video_versions:[{url:'https://v.cdninstagram.com/video.mp4'}]},img('b')] };
 const reelPost = {pk:'1',code:'B',media_type:2,product_type:'clips',user:{username:'artist'},caption:{text:'Reel caption'},has_audio:true,video_versions:[{url:'https://v.cdninstagram.com/reel.mp4',width:1080,height:1920}],clips_metadata:{music_info:{music_asset_info:{title:'Track',display_artist:'Musician'}}}};
