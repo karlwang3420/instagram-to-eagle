@@ -574,7 +574,11 @@
   window.addEventListener("resize", scheduleToolbars, { passive: true });
   let lastPath = location.pathname;
   setInterval(() => { if (location.pathname !== lastPath) { lastPath = location.pathname; startStoryEntry(); } }, 500);
-  globalThis.EagleUI = {toast};
+  globalThis.EagleUI = {toast,hasNativePostActions:el=>{
+    for(let node=el,depth=0;node&&depth<20&&!node.matches('main,body');node=node.parentElement,depth++)
+      if(bookmarkControl(node))return true;
+    return false;
+  }};
   startStoryEntry();
   document.addEventListener("pointerover", e => { const root = rootFor(e.target); if (root) hovered = root; }, true);
   document.addEventListener("contextmenu", e => { rightClicked = rootFor(e.target); }, true);

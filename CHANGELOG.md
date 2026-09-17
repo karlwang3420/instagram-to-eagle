@@ -2,6 +2,28 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
+## 0.9.9
+
+- Fixed permalink-wrapped timeline media being mistaken for a grid tile and receiving the centered hover control.
+- Timeline posts with native actions keep their established download placement beside the bookmark.
+
+## 0.9.8
+
+- Added route-independent hover downloads for linked post tiles on profile, Search, Saved, and other grid layouts.
+- Restored timeline, opened-post, Reel, and Story controls exactly to their established placement and styling.
+
+## 0.9.7
+
+- Test build that moved timeline whole-post controls to a media corner; superseded by 0.9.8.
+
+## 0.9.6
+
+- Test build that moved all download controls over media; superseded by 0.9.8.
+
+## 0.9.5
+
+- Added whole-post hover downloads to Saved posts and keyword-search result grids.
+
 ## 0.9.4
 
 - Version-only release for submission to the public AMO channel; 0.9.3 was already uploaded.

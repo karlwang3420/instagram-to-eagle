@@ -1,17 +1,17 @@
-/* Independently implemented profile UI; the only privileged actions originate in trusted clicks. */
+/* Linked post tiles share one hover UI; privileged actions originate in trusted clicks. */
 (() => {
   if (globalThis.EagleProfileControls) return;
-  const reserved=new Set(['accounts','explore','reels','reel','p','stories','direct','about','developer','legal','challenge','web','api']);
-  const profile=()=>{
-    const m=location.pathname.match(/^\/([\w.]{1,30})(?:\/(reels|tagged))?\/?$/);
-    return m&&!reserved.has(m[1].toLowerCase())?{username:m[1],tab:m[2]||'posts'}:null;
-  };
   const linkInfo=a=>{
     try {const u=new URL(a.href);const m=u.pathname.match(/^\/(?:[\w.]+\/)?(p|reel|reels)\/([\w-]+)\/?$/);
       return u.origin===location.origin&&m?{code:m[2],url:`https://www.instagram.com/${m[1]==='p'?'p':'reel'}/${m[2]}/`}:null;
     } catch {return null;}
   };
-  const isGridMedia=el=>!!profile()&&!el.closest('[role="dialog"]')&&!!linkInfo(el.closest('a[href]')||{});
+  const isGridMedia=el=>{
+    const a=el.closest('a[href]');
+    return !!a&&!a.closest('header')&&!globalThis.EagleUI?.hasNativePostActions(a)&&!!linkInfo(a)&&[...a.querySelectorAll('img,video')].some(media=>{
+      const r=media.getBoundingClientRect();return r.width>=100&&r.height>=100;
+    });
+  };
   const tiles=new Map(),intents=new Map();let timer=null;
   let pointer=null,hoverFrame=null,lastLayout=null,lastLayoutOwner=null,lastLayoutTime=0,lastLayoutPath='';
   function layoutSnapshot(a){
@@ -114,12 +114,10 @@
     tiles.set(a,record);positionTile(a,record);scheduleHover();
   }
   function refresh() {
-    timer=null;const route=profile();
+    timer=null;
     const wanted=new Set();
-    if(route)for(const a of document.querySelectorAll('main a[href]')) {
-      if(!isGridMedia(a)||!a.querySelector('img,video')||a.closest('header'))continue;
-      const r=a.getBoundingClientRect();if(r.width<100||r.height<100)continue;
-      wanted.add(a);
+    for(const a of document.querySelectorAll('a[href]')) {
+      if(isGridMedia(a))wanted.add(a);
     }
     for(const [a,record]of tiles)if(!a.isConnected||!wanted.has(a))removeTile(a,record);
     for(const orphan of document.querySelectorAll('[data-eagle-profile-tile]'))if(![...tiles.values()].some(r=>r.host===orphan))orphan.remove();
@@ -132,19 +130,16 @@
   new MutationObserver(records=>{if(records.some(r=>!(r.target instanceof Element&&r.target.closest('[data-eagle-profile-all],[data-eagle-profile-tile],[data-eagle-profile-dialog],#instagram-eagle-status'))))schedule();})
     .observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['href','src','class','hidden']});
   window.addEventListener('resize',schedule,{passive:true});
-  let lastPath=location.pathname;setInterval(()=>{if(lastPath!==location.pathname){lastPath=location.pathname;schedule();}},500);
   browser.runtime.onMessage.addListener(message=>{
-    if(message.type==='eagle:profile-status')return Promise.resolve({isProfile:!!profile()&&!document.querySelector('[role="dialog"]'),username:profile()?.username});
     if(message.type==='eagle:profile-layout'){
-      if(!profile())return Promise.resolve({ok:false,error:'Open the affected Instagram profile to capture its layout.'});
-      const visible=[...document.querySelectorAll('main a[href]')].filter(a=>{
-        if(!isGridMedia(a)||!a.querySelector('img,video'))return false;
+      const visible=[...document.querySelectorAll('a[href]')].filter(a=>{
+        if(!isGridMedia(a))return false;
         const r=a.getBoundingClientRect();return r.width>=100&&r.height>=100&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth;
       }).slice(0,4).map(layoutSnapshot);
       const remembered=lastLayoutPath===location.pathname?lastLayout:null;
       const chosen=remembered||visible[0];
       return Promise.resolve(chosen?{ok:true,layout:{...chosen,capture:remembered?'remembered-hover':'visible-grid',visibleTiles:visible}}:
-        {ok:false,error:'No profile tiles are visible. Scroll to the post grid, then reopen this panel. No hovering is required.'});
+        {ok:false,error:'No post tiles are visible. Scroll to the post grid, then reopen this panel. No hovering is required.'});
     }
     if(message.type==='eagle:resolve-profile'){
       const intent=intents.get(message.marker);intents.delete(message.marker);

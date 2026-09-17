@@ -15,7 +15,7 @@ module.exports=async({evaluate,send,ig,popup,delay,screenshot,profileNetwork})=>
   const wait=async expr=>{for(let i=0;i<60;i++){if(await evaluate(ig,expr))return;await delay(100);}assert.fail(expr);};
   const click=async(selector,dx=18,dy=18)=>{
     const r=JSON.parse(await evaluate(ig,`JSON.stringify(document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().toJSON())`));
-    await send('input.performActions',{context:ig,actions:[{type:'pointer',id:'profile-mouse',parameters:{pointerType:'mouse'},actions:[{type:'pointerMove',x:Math.round(r.x+dx),y:Math.round(r.y+dy),duration:0},{type:'pointerDown',button:0},{type:'pointerUp',button:0}]}]});
+    await send('input.performActions',{context:ig,actions:[{type:'pointer',id:'profile-mouse',parameters:{pointerType:'mouse'},actions:[{type:'pointerMove',x:Math.round(r.x+dx),y:Math.round(r.y+dy),duration:0},{type:'pause',duration:100},{type:'pointerDown',button:0},{type:'pointerUp',button:0}]}]});
   };
   const enter=()=>send('input.performActions',{context:ig,actions:[{type:'key',id:'profile-keys',actions:[{type:'keyDown',value:'\uE007'},{type:'keyUp',value:'\uE007'}]}]});
   const tab=()=>send('input.performActions',{context:ig,actions:[{type:'key',id:'profile-keys',actions:[{type:'keyDown',value:'\uE004'},{type:'keyUp',value:'\uE004'}]}]});
@@ -55,6 +55,31 @@ module.exports=async({evaluate,send,ig,popup,delay,screenshot,profileNetwork})=>
   assert.equal(payloads.length,1,await evaluate(ig,`document.getElementById('instagram-eagle-status')?.textContent`));assert.equal(payloads[0].items.length,2);assert.equal(payloads[0].items[1].url,'https://v.cdninstagram.com/profile-video.mp4');
   assert.equal(await evaluate(ig,'openedPost'),0);assert.equal(await evaluate(ig,'location.pathname'),'/artist/');
   console.log('PASS hover icon is grid-only, follows the thumbnail, saves the full mixed post without opening it');
+
+  await evaluate(ig,`window.gridMarkup=document.getElementById('profile-grid').innerHTML;true`);
+  for(const route of ['/karl3420/saved/all-posts/','/explore/','/artist/saved/','/explore/search/keyword/?q=art','/','/unrecognized/layout/']){
+    // Rebuild tiles on every path: the DOM, not the route, owns the controls.
+    await evaluate(ig,`document.getElementById('profile-grid').replaceChildren();true`);await delay(400);
+    assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-profile-tile]').length`),0);
+    await evaluate(ig,`history.pushState({},'',${JSON.stringify(route)});document.getElementById('profile-grid').innerHTML=gridMarkup;document.getElementById('tile').addEventListener('click',e=>{e.preventDefault();window.openedPost++});true`);await delay(800);
+    assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-profile-tile]').length`),3,route);
+    assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-control],[data-eagle-group]').length`),0,`${route}: no inline controls below tiles`);
+    await send('input.performActions',{context:ig,actions:[{type:'pointer',id:'profile-mouse',parameters:{pointerType:'mouse'},actions:[{type:'pointerMove',x:950,y:20,duration:0}]}]});
+    await delay(150);
+    assert.equal(await evaluate(ig,`getComputedStyle(document.querySelector('#tile [data-eagle-profile-tile]')).opacity`),'0');
+    await send('input.performActions',{context:ig,actions:[{type:'pointer',id:'profile-mouse',parameters:{pointerType:'mouse'},actions:[{type:'pointerMove',x:Math.round(hover.x+40),y:Math.round(hover.y+40),duration:0}]}]});
+    await delay(150);
+    assert.equal(await evaluate(ig,`getComputedStyle(document.querySelector('#tile [data-eagle-profile-tile]')).opacity`),'1');
+    assert.equal(await evaluate(ig,`(()=>{const a=document.querySelector('#tile').getBoundingClientRect(),b=document.querySelector('#tile [data-eagle-profile-tile]').getBoundingClientRect();return b.left>=a.left&&b.right<=a.right&&b.top>=a.top&&b.bottom<=a.bottom;})()`),true);
+    const before=payloads.length;await click('#tile [data-eagle-profile-tile]');await delay(1200);
+    payloads=JSON.parse(await evaluate(popup,'JSON.stringify(bg.profilePayloads)'));
+    assert.equal(payloads.length,before+1);assert.equal(payloads.at(-1).items.length,2);
+    assert.equal(payloads.at(-1).items[1].url,'https://v.cdninstagram.com/profile-video.mp4');
+    assert.equal(await evaluate(ig,'openedPost'),0);
+    assert.equal(await evaluate(ig,'location.pathname+location.search'),route);
+  }
+  await evaluate(ig,`history.pushState({},'','/artist/');true`);await delay(800);
+  console.log('PASS route-independent tiles including Saved, Explore, home and unknown paths: hover-only overlay, no inline controls, whole mixed post saved without navigation');
 
   assert.equal(profileNetwork.requests.length,0);
   console.log('PASS profile grid never starts account-wide feed requests');
@@ -109,6 +134,25 @@ module.exports=async({evaluate,send,ig,popup,delay,screenshot,profileNetwork})=>
   assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-profile-tile]').length`),2);
   assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-profile-all]').length`),0);
   await evaluate(ig,`history.pushState({},'','/');true`);await delay(800);
+  assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-profile-tile]').length`),2);
+  await evaluate(ig,`document.getElementById('profile-grid').replaceChildren();true`);await delay(400);
   assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-profile-tile],[data-eagle-profile-all]').length`),0);
-  console.log('PASS lazy grid insertion, cloned stale controls, route cleanup without bulk header controls');
+  console.log('PASS lazy insertion, cloned stale controls, route changes retain tiles and removing tiles cleans controls');
+
+  await evaluate(ig,`history.pushState({},'','/another/unknown/layout/');document.querySelector('main').innerHTML='<header><a href="/p/HEADER/"><img width="150" height="150" src="https://s.cdninstagram.com/header.jpg"></a></header><a href="/artist/saved/collection/"><img width="150" height="150" src="https://s.cdninstagram.com/collection.jpg"></a><div role="dialog" style="position:relative;width:238px;height:310px"><a id="inline-tile" href="/p/MIX/"><img width="238" height="310" src="https://s.cdninstagram.com/first.jpg"></a></div>';document.getElementById('inline-tile').addEventListener('click',e=>{e.preventDefault();window.openedPost++});true`);
+  await wait(`document.querySelectorAll('#inline-tile [data-eagle-profile-tile]').length===1`);
+  assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-profile-tile]').length`),1);
+  assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-control],[data-eagle-group]').length`),0);
+  const before=await evaluate(popup,'bg.profilePayloads.length');await click('#inline-tile [data-eagle-profile-tile]');await delay(1200);
+  payloads=JSON.parse(await evaluate(popup,'JSON.stringify(bg.profilePayloads)'));
+  assert.equal(payloads.length,before+1,await evaluate(ig,`JSON.stringify({status:document.getElementById('instagram-eagle-status')?.textContent,openedPost,opacity:getComputedStyle(document.querySelector('#inline-tile [data-eagle-profile-tile]')).opacity})`));assert.equal(payloads.at(-1).items.length,2);
+  assert.equal(payloads.at(-1).items[1].url,'https://v.cdninstagram.com/profile-video.mp4');
+  assert.equal(await evaluate(ig,'openedPost'),0);
+  console.log('PASS inline thumbnail links inside a dialog use tile hover controls; header and collection links do not');
+
+  await evaluate(ig,`history.pushState({},'','/');document.querySelector('main').innerHTML='<article id="timeline"><header><a href="/artist/">artist</a></header><a id="timeline-media" href="/reel/VIDEO/" style="display:block;width:460px;height:550px"><video width="460" height="550" src="https://v.cdninstagram.com/standalone.mp4"></video></a><section id="timeline-actions" style="display:flex;align-items:center"><button aria-label="Like">Like</button><button aria-label="Comment">Comment</button><button aria-label="Save" style="margin-left:auto">Save</button></section></article>';document.getElementById('timeline').__reactProps$fixture={post:profileVideo};true`);
+  await wait(`document.querySelector('#timeline-actions [data-eagle-control="all"]')!==null`);
+  assert.equal(await evaluate(ig,`document.querySelectorAll('#timeline-media [data-eagle-profile-tile]').length`),0);
+  assert.equal(await evaluate(ig,`document.querySelectorAll('#timeline-actions [data-eagle-control="all"]').length`),1);
+  console.log('PASS permalink-wrapped timeline video keeps its established action-row control and is not mistaken for a grid tile');
 };

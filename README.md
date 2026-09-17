@@ -28,7 +28,7 @@ Keep Eagle running while you save. Download buttons appear directly on Instagram
 | --- | --- |
 | Single photo or video | Download button beside the bookmark |
 | Carousel | Top-right button for the current item; button beside the bookmark for the whole post |
-| Profile grid | Hover or focus a thumbnail, then click its download button to save the whole post |
+| Profile, Search or Saved grid | Hover or focus a thumbnail, then click its download button to save the whole post |
 | Reel player | Download button near the top-right playback controls |
 | Story viewer | **Current story** or **All available stories from this account** |
 
