@@ -26,6 +26,7 @@ for (const [label, flags] of [
   ['Firefox profile integration', ['--profile-only']],
   ['Firefox notification integration', ['--toast-only']],
   ['Firefox post regressions', ['--post-regressions']],
+  ['Firefox Reel regressions', ['--reels-only']],
   ['Firefox detection regressions', ['--detection-only']]
 ]) run(label, [integration, ...flags]);
 

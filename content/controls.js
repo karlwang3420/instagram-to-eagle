@@ -164,7 +164,12 @@
       :host([data-eagle-control="all"]) svg{width:27px;height:27px}
       :host([data-player]) button{background:transparent;filter:drop-shadow(0 1px 3px #0009)}
       :host([data-player]) button:hover:enabled{background:#0004}
-      @media(prefers-reduced-motion:reduce){button{transition:none}}
+      :host([data-reel]) button,:host([data-reel]) button:hover:enabled{background:transparent;filter:none;box-shadow:none}
+      :host([data-reel]) svg{width:24px;height:24px;stroke-width:2;transition:transform .15s ease}
+      :host([data-reel]) button:hover:enabled svg{transform:scale(1.12)}
+      :host([data-reel-inline]){width:24px;height:24px;flex-basis:24px}
+      :host([data-reel-inline]) button{width:24px;height:24px;padding:0}
+      @media(prefers-reduced-motion:reduce){button,:host([data-reel]) svg{transition:none}}
     `;
     const b = document.createElement("button"); b.type = "button";
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -231,6 +236,23 @@
     }
     return null;
   }
+  function reelActionSlot(control, root) {
+    if (!control) return null;
+    let branch = control;
+    for (let parent=branch.parentElement; parent && root.contains(parent); branch=parent,parent=parent.parentElement) {
+      // The native rail also contains a 32px audio-cover image. Only actual
+      // post media is a boundary; any-img checks reject the captured rail.
+      if (largeMedia(parent,140,false).length) break;
+      const siblings = [...parent.children].filter(el=>!el.hasAttribute('data-eagle-group'));
+      const index = siblings.indexOf(branch);
+      const share = siblings[index-1];
+      if (share && [...share.querySelectorAll('svg[aria-label]')].some(svg=>
+        /^(share|分享|分享貼文|分享帖子|シェア|공유|partager|compartir|teilen)$/i.test(svg.getAttribute('aria-label').trim()))) {
+        return {parent,before:branch};
+      }
+    }
+    return null;
+  }
   function rowSlot(control, root) {
     if (!control) return null;
     let branch = control;
@@ -257,12 +279,25 @@
     const {media,all,group,root} = record;
     const playback = record.playerOverlay ? nativePlayback(root) : [];
     const control = record.playerOverlay ? playback[0] : record.bookmark;
-    const slot = record.playerOverlay ? rowSlot(control,root) : bookmarkSlot(control,root);
+    const reelSlot = record.playerOverlay && record.isReel ? reelActionSlot(record.bookmark,root) : null;
+    const slot = reelSlot || (record.playerOverlay ? rowSlot(control,root) : bookmarkSlot(control,root));
+    media.host.toggleAttribute('data-reel-inline', !!reelSlot);
+    // Native rail items own their vertical spacing. Match the Save wrapper's
+    // computed margins/padding, including responsive changes, without copying
+    // Instagram's generated class names or adjusting its own controls.
+    const reelSpacing = reelSlot ? getComputedStyle(reelSlot.before) : null;
+    for (const property of ['margin-top','margin-bottom','padding-top','padding-bottom']) {
+      const value = reelSpacing?.getPropertyValue(property) || '0px';
+      if (group.style.getPropertyValue(property) !== value) group.style.setProperty(property,value);
+    }
     const mode = record.playerOverlay ? 'player' : 'bottom';
     const parent = slot?.parent || (record.playerOverlay ? root : record.frame.parentElement);
     if (record.slotParent !== parent || record.slotBefore !== slot?.before || record.slotMode !== mode) {
       restoreStyles(record);
       group.style.marginInlineStart = ''; group.style.position = ''; group.style.top = ''; group.style.right = ''; group.style.zIndex = ''; group.style.display = 'inline-flex'; group.style.justifyContent = '';
+      // Both batch and single-media posts use this group beside native Save.
+      // Keep the extra horizontal separation out of Reel/Story player controls.
+      group.style.marginInlineEnd = slot && !record.playerOverlay ? '8px' : '';
       record.slotParent = parent; record.slotBefore = slot?.before; record.slotMode = mode;
       if (slot && !record.playerOverlay) {
         const layout = getComputedStyle(slot.parent);
@@ -373,6 +408,7 @@
       record.isStory = !!story;
       record.playerOverlay = record.isStory || isReel && (/^\/reels?(?:\/|$)/.test(location.pathname) || !record.bookmark);
       record.media.host.toggleAttribute('data-player', record.playerOverlay);
+      record.media.host.toggleAttribute('data-reel', isReel && record.playerOverlay);
       record.all.host.toggleAttribute('data-player', record.isStory);
       for (const control of [record.media, record.all]) control.host.setAttribute("data-eagle-post", code);
       const mediaLabel = record.isStory ? "Save current story to Eagle" : isReel ? "Save Reel to Eagle" : currentElement(root)?.tagName === "VIDEO" ? "Save current video to Eagle" : "Save current image to Eagle";
@@ -383,24 +419,40 @@
       record.all.host.style.setProperty("--eagle-ink", record.isStory ? 'white' : getComputedStyle(root).color);
       mountControls(record);
     }
-    retryStoryEntry();
+    retryPlayerEntry();
   }
-  let storyRetryTimer, storyEntryDeadline = 0;
-  function retryStoryEntry() {
-    clearTimeout(storyRetryTimer);
-    if (!/^\/stories\//.test(location.pathname) || Date.now() >= storyEntryDeadline) return;
-    const ready = [...toolbars.values()].some(record => record.isStory && record.root === storyOwner
-      && record.group.isConnected && record.media.host.isConnected && record.all.host.isConnected
+  const reelViewerRoute = () => /^\/reels?(?:\/|$)/.test(location.pathname);
+  const playerRoute = () => reelViewerRoute() || /^\/stories\//.test(location.pathname);
+  let playerRetryTimer, playerEntryDeadline = 0;
+  function retryPlayerEntry() {
+    clearTimeout(playerRetryTimer);
+    if (!playerRoute() || Date.now() >= playerEntryDeadline) return;
+    const reel = reelViewerRoute();
+    const code = location.pathname.match(postPattern)?.[1];
+    const ready = [...toolbars.values()].some(record =>
+      (reel ? record.isReel && record.code === code && record.bookmark && record.slotBefore
+        : record.isStory && record.root === storyOwner && record.all.host.isConnected)
+      && record.group.isConnected && record.media.host.isConnected && !record.media.host.hidden
       && visibleRect(record.group));
-    if (!ready) storyRetryTimer = setTimeout(scheduleToolbars, 250);
+    // Route updates can precede the player's layout/visibility without another
+    // DOM mutation. Retry entry only until controls mount, for at most 15s.
+    if (!ready) playerRetryTimer = setTimeout(scheduleToolbars, reel ? 100 : 250);
   }
-  function startStoryEntry() {
-    clearTimeout(storyRetryTimer);
-    storyEntryDeadline = /^\/stories\//.test(location.pathname) ? Date.now() + 15000 : 0;
+  function startPlayerEntry() {
+    clearTimeout(playerRetryTimer);
+    playerEntryDeadline = playerRoute() ? Date.now() + 15000 : 0;
     scheduleToolbars();
   }
-  let refreshTimer;
+  let refreshTimer, refreshFrame;
   function scheduleToolbars() {
+    if (refreshFrame) return;
+    // Coalesce Reel scroll/render events into the next paint instead of adding
+    // the feed's 200ms debounce to every newly visible card.
+    if (reelViewerRoute()) {
+      clearTimeout(refreshTimer); refreshTimer = null;
+      refreshFrame = requestAnimationFrame(() => { refreshFrame = null; refreshToolbars(); });
+      return;
+    }
     if (refreshTimer) return;
     refreshTimer = setTimeout(() => { refreshTimer = null; refreshToolbars(); }, 200);
   }
@@ -420,12 +472,13 @@
   document.addEventListener('animationend', scheduleToolbars, true);
   document.addEventListener("load", scheduleToolbars, true);
   for (const event of ['loadedmetadata','loadeddata','canplay']) document.addEventListener(event, scheduleToolbars, true);
-  window.addEventListener('pageshow', startStoryEntry);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) startStoryEntry(); });
+  window.addEventListener('pageshow', startPlayerEntry);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) startPlayerEntry(); });
   window.addEventListener("resize", scheduleToolbars, { passive: true });
   let lastPath = location.pathname;
-  setInterval(() => { if (location.pathname !== lastPath) { lastPath = location.pathname; startStoryEntry(); } }, 500);
-  startStoryEntry();
+  // Cheap URL-only check: Instagram can update history after the scroll event.
+  setInterval(() => { if (location.pathname !== lastPath) { lastPath = location.pathname; startPlayerEntry(); } }, 100);
+  startPlayerEntry();
   document.addEventListener("pointerover", e => { const root = rootFor(e.target); if (root) hovered = root; }, true);
   document.addEventListener("contextmenu", e => { rightClicked = rootFor(e.target); }, true);
   browser.runtime.onMessage.addListener(message => {

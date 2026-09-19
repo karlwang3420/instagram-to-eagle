@@ -5,6 +5,14 @@ Release notes are listed newest first. Older entries describe behavior at that v
 ## 0.9.12
 
 - Added a grey circular background to Explore and search-grid hover controls, matching the timeline button.
+- Placed the Reel download control between Share and Save using the captured native action rail, including its nested Save buttons and audio-cover image.
+- Excluded Reel audio links from post identification and import validation.
+- Retained the top-right fallback when the native Share/Save placement cannot be identified.
+- Matched the Reel download icon to the native 24px icons, removed its background and shadow, and added a subtle hover enlargement.
+- Matched inline Reel button spacing to the native Save wrapper's margins and padding.
+- Added 8px of separation before native Save for both the Download All and single-image/video action-row buttons.
+- Kept the Reel download control attached to the active Reel as the viewer virtualizes cards while scrolling.
+- Refresh Reel controls on the next animation frame, detect route changes sooner, and retry initial player entry while its layout settles.
 
 ## 0.9.11
 
