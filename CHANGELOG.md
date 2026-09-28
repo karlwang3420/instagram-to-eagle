@@ -2,7 +2,7 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
-## 0.9.13
+## 1.0.1
 
 - Play a short chime when a save is sent to Eagle.
 
