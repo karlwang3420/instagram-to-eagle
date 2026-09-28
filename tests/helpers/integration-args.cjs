@@ -4,6 +4,7 @@ const SUITE_FLAGS = new Set([
   '--toast-only',
   '--post-regressions',
   '--carousel-only',
+  '--reels-only',
   '--detection-only'
 ]);
 const BASE_FLAGS = new Set(['--inline', '--binding']);

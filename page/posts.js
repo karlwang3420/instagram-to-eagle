@@ -14,7 +14,7 @@ async function extractInstagramPost(context, allowNetwork, mode) {
   const root = document.querySelector(`[data-eagle-selection="${context.marker}"]`);
   if (!root) throw new Error("The selected post moved or closed. Select it again.");
   if (context.isGrid && canonicalCode(root.href?.match(/\/(?:p|reels?)\/([\w-]+)\/?(?:[?#]|$)/)?.[1]) !== shortcode) throw new Error('This profile tile changed. Select it again.');
-  const links = [...root.querySelectorAll('a[href]')].map(a => a.href.match(/\/(?:p|reels?)\/([\w-]+)\/?(?:[?#]|$)/)?.[1]).filter(Boolean);
+  const links = [...root.querySelectorAll('a[href]')].map(a => a.href.match(/\/(?:p|reels?)\/(?!audio(?:\/|[?#]|$))([\w-]+)\/?(?:[?#]|$)/)?.[1]).filter(Boolean);
   if (links.length && !links.some(code=>canonicalCode(code)===shortcode)) throw new Error("The selected post changed. Reopen the popup.");
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
   let numericId = 0n;

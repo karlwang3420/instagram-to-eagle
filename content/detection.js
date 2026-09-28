@@ -2,7 +2,7 @@
 (() => {
   if (globalThis.EagleDetection) return;
 
-  const postPattern = /\/(?:p|reels?)\/([\w-]+)\/?(?:[?#]|$)/;
+  const postPattern = /\/(?:p|reels?)\/(?!audio(?:\/|[?#]|$))([\w-]+)\/?(?:[?#]|$)/;
   const playbackLabel = /^(play|pause|mute|unmute|turn (?:on|off) sound|sound (?:on|off)|播放|暫停|暂停|靜音|静音|取消靜音|取消静音|開啟音效|關閉音效|开启声音|关闭声音|音效|音量)$/i;
   const bookmarkLabel = /^(save|saved|unsave|remove from saved|儲存|已儲存|取消儲存|保存|已保存|收藏|已收藏|取消收藏|저장|저장됨|保存済み|enregistrer|enregistré|guardar|guardado|speichern|gespeichert)$/i;
   const bookmarkShape = 'svg polygon[points="20 21 12 13.44 4 21 4 3 20 3 20 21"],svg path[d="M20 22a.999.999 0 0 1-.687-.273L12 14.815l-7.313 6.912A1 1 0 0 1 3 21V3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1Z"]';
@@ -30,6 +30,15 @@
 
   function postCodes(root) {
     return new Set(postLinks(root).map(anchor => anchor.href.match(postPattern)?.[1]).filter(Boolean));
+  }
+
+  function routePostIdentity() {
+    const match = location.pathname.match(/^\/(p|reel|reels)\/([\w-]+)\/?$/);
+    return match ? {
+      code: match[2],
+      url: `https://www.instagram.com/${match[1] === 'p' ? 'p' : 'reel'}/${match[2]}/`,
+      isReel: match[1] !== 'p'
+    } : null;
   }
 
   function isRendered(element) {
@@ -114,12 +123,38 @@
     return null;
   }
 
+  function dominantVisibleMedia() {
+    return [...document.querySelectorAll('img,video')]
+      .map(element => ({element, area:visibleRect(element)}))
+      .filter(({element,area}) => {
+        const rect = element.getBoundingClientRect();
+        return area > 0 && rect.width >= 140 && rect.height >= 140;
+      })
+      .sort((a,b) => b.area-a.area)[0]?.element || null;
+  }
+
+  function activeReelPost(seed) {
+    const identity = routePostIdentity();
+    if (!identity?.isReel) return null;
+    const media = dominantVisibleMedia();
+    if (!media || (seed !== media && !seed.contains(media))) return null;
+    // A Reel can expose only its audio link. Bind the route to the visible
+    // player's own Save action, never to a neighboring mounted card.
+    for (let node=media.parentElement; node && !node.matches('body,html'); node=node.parentElement) {
+      const codes = postCodes(node);
+      if (codes.size > 1 || (codes.size === 1 && !codes.has(identity.code))) break;
+      const nativeAnchor = bookmarkControl(node,media,identity.code);
+      if (nativeAnchor) return {owner:node,identity,nativeAnchor};
+    }
+    return null;
+  }
+
   function source(root, storyOwner = null) {
     if (storyRoute() && root === storyOwner) return location.href;
     const links = postLinks(root);
     return links.find(anchor => anchor.querySelector('time'))?.href
       || links[0]?.href
-      || (postPattern.test(location.href) ? location.href : null);
+      || (postPattern.test(location.href) && (!routePostIdentity()?.isReel || root.contains(dominantVisibleMedia())) ? location.href : null);
   }
 
   function isRelatedControl(control, seed, code) {
@@ -178,6 +213,14 @@
         };
       }
       return { surface: 'unknown', owner: null, identity: null, nativeAnchor: null, reason: 'outside-active-story' };
+    }
+
+    const activeReel = activeReelPost(element);
+    if (activeReel) {
+      return {
+        surface: 'post', owner:activeReel.owner, identity:activeReel.identity,
+        nativeAnchor:activeReel.nativeAnchor, reason:null
+      };
     }
 
     const anchor = element.closest('a[href]');

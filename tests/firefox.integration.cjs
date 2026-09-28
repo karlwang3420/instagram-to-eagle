@@ -158,6 +158,13 @@ async function clickControl(context, kind = 'media', code = 'B') {
       console.log('ALL DETECTION REGRESSION CHECKS PASSED. Eagle imports were mocked.');
       return;
     }
+    if(options.suite === '--reels-only') {
+      await require('./browser/reels-browser.cjs')({evaluate,send,waitFor,ig,popup,delay,screenshot:async name=>{
+        const shot=await send('browsingContext.captureScreenshot',{context:ig,origin:'viewport'});
+        fs.writeFileSync(path.join(work,name),Buffer.from(shot.data,'base64'));
+      }});
+      return;
+    }
     const walked = JSON.parse(await evaluate(popup, `(async()=>{const ctx=await bg.selection(igTab.id);return JSON.stringify(await browser.tabs.sendMessage(igTab.id,{type:'eagle:carousel',marker:ctx.marker}))})()`));
     assert.equal(walked.ok, true); assert.deepEqual(walked.items.map(m=>m.type), ['image','video','image']);
     assert.equal(await evaluate(ig, 'window.slide'), 2); console.log('PASS carousel walk and restoration in Firefox');
@@ -200,7 +207,7 @@ async function clickControl(context, kind = 'media', code = 'B') {
       const bookmark=JSON.parse(await evaluate(ig,`JSON.stringify(document.querySelector('#post [aria-label="Save"]').getBoundingClientRect().toJSON())`));
       const mediaButton=await controlRect(ig), batchButton=await controlRect(ig,'all');
       assert.ok(Math.abs(mediaButton.right-(frame.right-12))<1);assert.ok(Math.abs(mediaButton.top-(frame.top+12))<1);
-      assert.ok(Math.abs(batchButton.right-(bookmark.left-12))<1);assert.ok(Math.abs((batchButton.top+18)-(bookmark.top+bookmark.height/2))<1);
+      assert.ok(Math.abs(batchButton.right-(bookmark.left-20))<1);assert.ok(Math.abs((batchButton.top+18)-(bookmark.top+bookmark.height/2))<1);
       await evaluate(ig,`window.scrollTo(0,20);true`);await delay(100);
       assert.ok(Math.abs((await controlRect(ig)).top-(mediaButton.top-20))<1);
       await evaluate(ig,`window.scrollTo(0,0);document.getElementById('instagram-eagle-status')?.remove();true`);await delay(300);
@@ -252,6 +259,7 @@ async function clickControl(context, kind = 'media', code = 'B') {
         assert.ok(Math.abs((bookmark.top+bookmark.height/2)-(left.top+left.height/2))<1,'bookmark must stay on the native action baseline');
         assert.ok(Math.abs((download.top+download.height/2)-(bookmark.top+bookmark.height/2))<1,'download and bookmark must share one row');
         assert.ok(download.right<=bookmark.left && bookmark.right<=row.right+1,'both buttons must fit without overlap');
+        assert.ok(Math.abs(bookmark.left-download.right-20)<1,'batch control adds 8px beside the native 12px row gap');
         assert.ok(row.height<=44,'action row must not grow a second line');
       }
       await evaluate(ig,`document.getElementById('grid-actions').style.width='460px';document.querySelector('#bookmark-cell button').click();true`);
@@ -297,7 +305,7 @@ async function clickControl(context, kind = 'media', code = 'B') {
         assert.equal(await evaluate(ig, `getComputedStyle(document.querySelector('[data-eagle-control="all"][data-eagle-post="${singleCode}"]')).visibility`),'visible');
         const bottom=await controlRect(ig,'all',singleCode);
         const bookmark=JSON.parse(await evaluate(ig,`JSON.stringify(document.querySelector('#post [aria-label="Save"]').getBoundingClientRect().toJSON())`));
-        assert.ok(Math.abs(bottom.right-(bookmark.left-12))<1);
+        assert.ok(Math.abs(bottom.right-(bookmark.left-20))<1);
         assert.ok(Math.abs(bottom.top+18-(bookmark.top+bookmark.height/2))<1);
         await evaluate(popup,'bg.testPayload=null;true');
         await clickControl(ig,'all',singleCode);await delay(1600);
