@@ -89,6 +89,7 @@ async function save(tabId, context, mode) {
     const partial = result.meta.metadataSource.includes("partial");
     const text = `Sent ${selected.length} ${mode==='post' ? selected.length===1?'file':'files' : context.isStory ? selected.length === 1 ? 'story' : 'stories' : mode === "reel" ? "Reel" : mode === "video" ? "video" : selected.length === 1 ? "image" : "images"} to Eagle. Check Eagle for download completion.`;
     await notify(tabId, text);
+    new Audio(browser.runtime.getURL("sounds/success.ogg")).play();
     return { text, partial };
   } finally { jobs.delete(tabId); }
 }

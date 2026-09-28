@@ -2,6 +2,10 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
+## 0.9.13
+
+- Play a short chime when a save is sent to Eagle.
+
 ## 0.9.12
 
 - Added a grey circular background to Explore and search-grid hover controls, matching the timeline button.

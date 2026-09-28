@@ -23,6 +23,7 @@ RUNTIME = [
     "content/carousel-dom.js",
     "content/controls.js",
     "content/grid-controls.js",
+    "sounds/success.ogg",
     *(f"icons/icon-{size}.png" for size in (16, 32, 48, 96, 128)),
 ]
 SOURCE = RUNTIME + [
