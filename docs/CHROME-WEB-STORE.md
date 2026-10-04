@@ -106,6 +106,8 @@ Save Instagram photos, videos, Reels and Stories that the user selects into the 
 
 ### Permission justifications
 
+The dashboard has one *Host permission justification* box; the submitted text combines the two host entries below.
+
 **scripting**
 
 ```text
@@ -173,6 +175,14 @@ Check all three certifications. All of them are true for this extension.
 | Regions | All regions |
 
 ## Test instructions tab
+
+The dashboard's *Additional instructions* field is limited to 500 characters. Leave the username and password empty. This condensed version was submitted:
+
+```text
+Needs desktop Chrome 148+, the Eagle desktop app (free trial: eagle.cool) open with a library, and any signed-in Instagram account. Open an Instagram post: a download button appears beside the bookmark (whole post) and top-right on carousels (current item). Click it; a toast reports it was sent to Eagle and the item appears in Eagle with its source link. Also try the profile-grid hover button, the Reel rail button and the Story buttons. The popup sets folder and tags.
+```
+
+Fuller notes, for a support reply if a reviewer asks:
 
 ```text
 Requirements: desktop Chrome 148+, the Eagle desktop app (https://eagle.cool/, free trial) running with any library open, and any signed-in Instagram account. No test credentials are included; the extension works with any account.
