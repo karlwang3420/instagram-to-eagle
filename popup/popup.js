@@ -20,7 +20,7 @@ function paintAccess(access) {
   $('grantAccess').hidden = access.ready;
   $('accessHeading').textContent = access.ready ? 'Access ready' : 'Access needed';
   $('accessDescription').textContent = access.ready ? 'Instagram and Eagle access are enabled.' : 'Allow access to save Instagram media to Eagle.';
-  $('accessStatus').textContent = access.ready ? 'Keep Eagle open and reload Instagram.' : 'Firefox will ask you to confirm.';
+  $('accessStatus').textContent = access.ready ? 'Keep Eagle open and reload Instagram.' : 'Your browser will ask you to confirm.';
   $('accessStatus').classList.remove('error');
 }
 async function checkEagle() {

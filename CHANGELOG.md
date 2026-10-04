@@ -2,6 +2,12 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
+## 1.0.4
+
+- Removed the unused `activeTab` permission from both builds.
+- Setup and permission messages no longer mention Firefox, so they read correctly in Chrome.
+- Added Chrome Web Store listing copy, privacy answers, screenshots, and promo tiles.
+
 ## 1.0.3
 
 - Combined the Reel performance fixes with Chrome support and the save-success chime in new Firefox and Chrome release packages.

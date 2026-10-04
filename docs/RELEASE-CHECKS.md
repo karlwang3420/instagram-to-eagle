@@ -1,4 +1,28 @@
-# Publication checks — 1.0.3
+# Publication checks — 1.0.4
+
+Prepared for public Firefox and first-time Chrome Web Store submission. **Not submitted, signed, or store-approved** by this release preparation.
+
+## Changes from 1.0.3
+
+- Removed the unused `activeTab` permission from both manifests. Host permissions already cover every tab the extension operates on, and no code path relied on `activeTab`.
+- Setup/permission text says "your browser" instead of "Firefox", so the Chrome build no longer shows Firefox-specific wording.
+- Added Chrome Web Store materials: [CHROME-WEB-STORE.md](CHROME-WEB-STORE.md) and [store-assets/chrome/](store-assets/chrome/). The privacy policy now covers Chrome and version 1.0.4+.
+
+## Release artifacts
+
+- Chrome: `dist/instagram-to-eagle-1.0.4-chrome.zip`. Upload as a **new** Chrome Web Store item. Permissions: `scripting`, `storage`, `offscreen`. Hosts: Instagram and `127.0.0.1`.
+- Firefox: `dist/instagram-to-eagle-1.0.4-unsigned.xpi`. Upload to the existing AMO entry with **On this site** selected, keeping ID `instagram-to-eagle@local.karl`.
+- Source: `dist/instagram-to-eagle-1.0.4-source.zip`. Run `python tools/prepare_amo.py` for the AMO reviewer source and bundle.
+
+## Validation evidence
+
+- `node tests/run.cjs` on Firefox 157.0: all 65 unit tests and all seven Firefox browser suites passed with the 1.0.4 manifest.
+- Chrome for Testing 153.0.8010.12 smoke test of the generated 1.0.4 Chrome build: the service worker initialized with an empty access badge, so host access was granted without `activeTab`. Setup showed granted access and mocked Eagle status. A trusted click on a content control sent the selected carousel image through the worker to a mocked Eagle import, and the success chime created its offscreen document. Audible output was not verified.
+- The store screenshots were captured from the same unpacked 1.0.4 build, with real injected controls on mock Instagram pages. They also exercise a whole-carousel import, the profile-grid hover control, Reel rail placement, Story controls, and the popup's nested-folder list, all against mocked Eagle data.
+
+These checks use local fixtures and mocked imports, not a live Instagram account or real Eagle downloads. No store validation, signing, approval, or live cross-browser testing is claimed.
+
+## Historical publication checks — 1.0.3
 
 Prepared for public Firefox and Chrome submission; **not submitted, signed, or store-approved** by this release preparation.
 

@@ -4,7 +4,7 @@
 
 A Firefox and Chrome extension that saves Instagram photos, videos, carousels, Reels, and Stories directly to your [Eagle](https://eagle.cool/) library, with a short title, source link, and optional tags.
 
-[Build v1.0.3 for Firefox and Chrome](docs/DEVELOPMENT.md#packaging) · [Changelog](CHANGELOG.md) · [Development](docs/DEVELOPMENT.md) · [Privacy](PRIVACY.md)
+[Build v1.0.4 for Firefox and Chrome](docs/DEVELOPMENT.md#packaging) · [Changelog](CHANGELOG.md) · [Development](docs/DEVELOPMENT.md) · [Privacy](PRIVACY.md)
 
 ## Install
 

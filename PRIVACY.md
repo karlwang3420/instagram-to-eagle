@@ -1,6 +1,6 @@
 # Privacy policy — Instagram to Eagle
 
-Last updated: September 16, 2026. Applies to versions 0.9.2 through 0.9.4.
+Last updated: October 4, 2026. Applies to version 1.0.4 and later, in Firefox and Chrome.
 
 Instagram to Eagle is maintained by [karlwang3420](https://github.com/karlwang3420). It saves media you choose on Instagram to the Eagle application on your computer. The extension has no developer-operated server, analytics, advertising, or automatic error reporting. The developer does not receive your saved media, Instagram credentials, or browsing history through the extension.
 
@@ -20,13 +20,13 @@ No media or metadata is sent to a developer-operated service. The extension does
 
 ## Local storage and retention
 
-Firefox extension storage keeps your selected Eagle folder ID and three tag preferences. Older installations may retain unused preferences from earlier versions. Temporary selections and metadata can remain in extension memory during use; the extension does not persist a media archive or browsing log in its settings, and it does not use browser sync storage.
+The browser's local extension storage keeps your selected Eagle folder ID and three tag preferences. Older installations may retain unused preferences from earlier versions. Temporary selections and metadata can remain in extension memory during use; the extension does not persist a media archive or browsing log in its settings, and it does not use browser sync storage.
 
 Saved media and metadata remain in your Eagle library under your control. Uninstalling this extension does not delete Eagle items. You can remove the extension's stored settings by removing the extension, and delete imported items in Eagle.
 
 ## Your choices
 
-Imports are initiated through the extension's download controls. You can choose a folder, disable any or all automatic tag categories, revoke site permissions in Firefox, or remove the extension. Disabling the Creator tag does not remove the creator's username from the item title.
+Imports are initiated through the extension's download controls. You can choose a folder, disable any or all automatic tag categories, revoke site permissions in your browser's extension settings, or remove the extension. Disabling the Creator tag does not remove the creator's username from the item title.
 
 ## Support and changes
 

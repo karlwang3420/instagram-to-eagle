@@ -12,7 +12,7 @@ globalThis.EagleAccess = (() => {
   }
   async function requireLocal() {
     if (!await browser.permissions.contains({origins: [local]})) {
-      throw new Error('Eagle access is not allowed yet. Open Instagram to Eagle from Firefox’s extensions menu and choose Allow access. Nothing was sent.');
+      throw new Error('Eagle access is not allowed yet. Open Instagram to Eagle from your browser’s extensions menu and choose Allow access. Nothing was sent.');
     }
   }
   return {origins, state, requireLocal};
