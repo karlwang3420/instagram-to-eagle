@@ -1,6 +1,17 @@
 # Publication checks — 1.0.5 (Firefox)
 
-Version-only Firefox rebuild of 1.0.4. **Not submitted or signed** by this preparation. The Chrome Web Store item remains at 1.0.4, which is in review; do not upload the 1.0.5 Chrome ZIP unless a new Chrome version is needed.
+Version-only Firefox rebuild of 1.0.4.
+
+## Submission status (October 4, 2026)
+
+Both browsers have been submitted for public release. Neither is approved yet.
+
+| Store | Version | Status |
+| --- | --- | --- |
+| Firefox (AMO) | 1.0.5 | Submitted to the existing entry (**On this site**, ID `instagram-to-eagle@local.karl`); awaiting review |
+| Chrome Web Store | 1.0.4 | Submitted as a new public item `kcbhpiojkhdfflhoepkonoobinkdkhpo`; pending review, set to publish automatically once approved |
+
+Chrome stays on 1.0.4; its runtime is identical to 1.0.5 apart from the version number. Do not upload the 1.0.5 Chrome ZIP unless a new Chrome version is needed.
 
 - Firefox: `dist/instagram-to-eagle-1.0.5-unsigned.xpi`. Upload to the existing AMO entry with **On this site** selected, keeping ID `instagram-to-eagle@local.karl`. Reviewer source: `dist/instagram-to-eagle-1.0.5-amo-source.zip`.
 - All 21 runtime members except `manifest.json` are byte-identical to the 1.0.4 XPI, and in the manifest only `version` changed (1.0.4 → 1.0.5).
