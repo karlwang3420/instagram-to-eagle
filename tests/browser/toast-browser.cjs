@@ -47,4 +47,6 @@ module.exports = async ({evaluate,send,ig,popup,delay,screenshot}) => {
   await screenshot('toast-narrow-firefox.png');
   await pointer(r.x+r.width-20,r.y+20,true); assert.equal(await exists(),false);
   console.log('PASS narrow-screen wrapping, long error containment, literal text safety and mouse dismissal');
+  assert.equal(await evaluate(popup,`browser.runtime.getBackgroundPage().then(bg=>{const a=new bg.Audio(browser.runtime.getURL('sounds/success.ogg'));return a.play().then(()=>a.duration>0.5&&a.duration<1)})`),true);
+  console.log('PASS success sound plays from the background page without a user gesture');
 };

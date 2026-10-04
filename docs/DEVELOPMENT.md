@@ -47,7 +47,7 @@ After setting a new version in `manifest.json`, run:
 python tools/package_extension.py
 ```
 
-This creates a runtime-only unsigned XPI and a source ZIP under `dist/`. Existing archives are never overwritten. The tracked 0.9.4 XPI is a version-only increment of 0.9.3 for public-channel submission; other local archives are ignored by Git. The publisher subsequently reported 0.9.3 working. See [release checks](RELEASE-CHECKS.md) for the archive comparison and linter results.
+This creates a runtime-only unsigned XPI, a Chrome ZIP and a source ZIP under `dist/`. The Chrome ZIP is generated from the same files: its manifest runs the background scripts in a generated service worker, drops Firefox-only settings and adds the `offscreen` permission for the save chime. Existing archives are never overwritten. The tracked 0.9.4 XPI is a version-only increment of 0.9.3 for public-channel submission; other local archives are ignored by Git. The publisher subsequently reported 0.9.3 working. See [release checks](RELEASE-CHECKS.md) for the archive comparison and linter results.
 
 Use the XPI for Mozilla signing, since it excludes development files and test fixtures. See Mozilla's [signing and distribution guide](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/).
 

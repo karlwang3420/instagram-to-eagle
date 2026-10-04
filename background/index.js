@@ -47,6 +47,12 @@ async function extract(tabId, context, network, mode) {
 async function notify(tabId, text, failed = false) {
   try { await browser.tabs.sendMessage(tabId, { type: "eagle:toast", text, failed }); } catch { /* User closed tab. */ }
 }
+async function chime() {
+  if (globalThis.Audio) return new Audio(browser.runtime.getURL("sounds/success.ogg")).play();
+  // Chrome's service worker has no DOM audio; an offscreen page plays and closes itself when idle.
+  if (await browser.offscreen.hasDocument()) await browser.offscreen.closeDocument();
+  await browser.offscreen.createDocument({ url: "sounds/chime.html", reasons: ["AUDIO_PLAYBACK"], justification: "Play a chime when a save is sent to Eagle." });
+}
 async function preview(tabId) {
   const context = await selection(tabId);
   const result = await extract(tabId, context, false);
@@ -89,6 +95,7 @@ async function save(tabId, context, mode) {
     const partial = result.meta.metadataSource.includes("partial");
     const text = `Sent ${selected.length} ${mode==='post' ? selected.length===1?'file':'files' : context.isStory ? selected.length === 1 ? 'story' : 'stories' : mode === "reel" ? "Reel" : mode === "video" ? "video" : selected.length === 1 ? "image" : "images"} to Eagle. Check Eagle for download completion.`;
     await notify(tabId, text);
+    chime();
     return { text, partial };
   } finally { jobs.delete(tabId); }
 }

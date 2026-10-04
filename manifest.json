@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Instagram to Eagle",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Save Instagram posts, profile grids, Reels and Stories to Eagle with a short title, source link and tags.",
   "browser_specific_settings": {
     "gecko": {

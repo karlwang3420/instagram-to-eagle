@@ -20,6 +20,12 @@ The current build is **unsigned** and is removed when Firefox restarts. A perman
 
 To update, load the new XPI and reload your Instagram tabs. Reloading an older XPI does not replace its contents.
 
+### Chrome
+
+1. Build the Chrome ZIP (see [Development](docs/DEVELOPMENT.md#packaging)) and extract it to a folder.
+2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and select the extracted folder.
+3. Reload your Instagram tabs.
+
 ## Save media
 
 Keep Eagle running while you save. Download buttons appear directly on Instagram; hover or focus a button to see its label.

@@ -2,6 +2,14 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
+## 1.0.2
+
+- Added a Chrome build. Chrome runs the background scripts in a service worker and plays the chime from an offscreen page.
+
+## 1.0.1
+
+- Play a short chime when a save is sent to Eagle.
+
 ## 1.0.0
 
 - First stable release, carrying forward the tested Reel performance and control-placement fixes from 0.9.15.
