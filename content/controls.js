@@ -362,9 +362,16 @@
     } else if (!record.isStory && !all.host.isConnected) root.append(all.host);
   }
   function refreshToolbars() {
+    if (document.hidden) return;
+    Detection.withSnapshot(refreshToolbarSnapshot);
+  }
+  function refreshToolbarSnapshot() {
     storyOwner = storyRoute() ? findStoryRoot() : null;
     const roots = new Set();
-    for (const media of document.querySelectorAll("img,video")) {
+    // Reels need one toolbar, not full classification of every preloaded card.
+    const activeMedia = reelViewerRoute() ? Detection.dominantVisibleMedia() : null;
+    const candidates = reelViewerRoute() ? (activeMedia ? [activeMedia] : []) : document.querySelectorAll("img,video");
+    for (const media of candidates) {
       const r = media.getBoundingClientRect();
       if (r.width < 140 || r.height < 140) continue;
       const root = rootFor(media); if (root) roots.add(root);
@@ -398,10 +405,10 @@
       const model = carouselModel(root);
       const anchor = model.track?.parentElement || mediaAnchor(root);
       if (!anchor) continue;
-      const record = toolbars.get(root) || addToolbar(root);
       const url = source(root), story = storyRoute();
       const code = story ? story[2] || `story-${story[1]}` : url?.match(postPattern)?.[1], isReel = /\/reels?\//.test(url);
       if (!code) continue;
+      const record = toolbars.get(root) || addToolbar(root);
       record.model = model;
       record.isCarousel = !story && !isReel && model.isCarousel;
       record.code = code; record.isReel = isReel; record.frame = anchor; record.bookmark = bookmarkControl(root);
@@ -436,25 +443,24 @@
       && visibleRect(record.group));
     // Route updates can precede the player's layout/visibility without another
     // DOM mutation. Retry entry only until controls mount, for at most 15s.
-    if (!ready) playerRetryTimer = setTimeout(scheduleToolbars, reel ? 100 : 250);
+    if (!ready) playerRetryTimer = setTimeout(scheduleToolbars, 250);
   }
   function startPlayerEntry() {
     clearTimeout(playerRetryTimer);
     playerEntryDeadline = playerRoute() ? Date.now() + 15000 : 0;
     scheduleToolbars();
   }
-  let refreshTimer, refreshFrame;
+  let refreshTimer, lastReelRefresh = -Infinity;
   function scheduleToolbars() {
-    if (refreshFrame) return;
-    // Coalesce Reel scroll/render events into the next paint instead of adding
-    // the feed's 200ms debounce to every newly visible card.
-    if (reelViewerRoute()) {
-      clearTimeout(refreshTimer); refreshTimer = null;
-      refreshFrame = requestAnimationFrame(() => { refreshFrame = null; refreshToolbars(); });
-      return;
-    }
-    if (refreshTimer) return;
-    refreshTimer = setTimeout(() => { refreshTimer = null; refreshToolbars(); }, 200);
+    if (document.hidden || refreshTimer) return;
+    // Keep the first update prompt, but cap layout work under native animation
+    // churn instead of scanning at the display's 60/120/144Hz refresh rate.
+    const wait = reelViewerRoute() ? Math.max(0, 120 - (performance.now() - lastReelRefresh)) : 200;
+    refreshTimer = setTimeout(() => {
+      refreshTimer = null;
+      if (reelViewerRoute()) lastReelRefresh = performance.now();
+      refreshToolbars();
+    }, wait);
   }
   new MutationObserver(records => {
     if (records.some(record => {
@@ -473,11 +479,14 @@
   document.addEventListener("load", scheduleToolbars, true);
   for (const event of ['loadedmetadata','loadeddata','canplay']) document.addEventListener(event, scheduleToolbars, true);
   window.addEventListener('pageshow', startPlayerEntry);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) startPlayerEntry(); });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) startPlayerEntry();
+    else { clearTimeout(refreshTimer); refreshTimer = null; clearTimeout(playerRetryTimer); }
+  });
   window.addEventListener("resize", scheduleToolbars, { passive: true });
   let lastPath = location.pathname;
   // Cheap URL-only check: Instagram can update history after the scroll event.
-  setInterval(() => { if (location.pathname !== lastPath) { lastPath = location.pathname; startPlayerEntry(); } }, 100);
+  setInterval(() => { if (location.pathname !== lastPath) { lastPath = location.pathname; startPlayerEntry(); } }, 250);
   startPlayerEntry();
   document.addEventListener("pointerover", e => { const root = rootFor(e.target); if (root) hovered = root; }, true);
   document.addEventListener("contextmenu", e => { rightClicked = rootFor(e.target); }, true);

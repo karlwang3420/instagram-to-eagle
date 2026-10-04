@@ -64,6 +64,7 @@
       right: Math.min(bounds.right, rect.right),
       bottom: Math.min(bounds.bottom, rect.bottom)
     };
+    if (box.right <= box.left || box.bottom <= box.top) return 0;
     for (let node = element; node; node = node.parentElement) {
       const style = getComputedStyle(node);
       if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse'
@@ -123,14 +124,27 @@
     return null;
   }
 
+  let detectionSnapshot = null;
+  function withSnapshot(callback) {
+    const previous = detectionSnapshot;
+    detectionSnapshot = {};
+    try { return callback(); }
+    finally { detectionSnapshot = previous; }
+  }
+
   function dominantVisibleMedia() {
-    return [...document.querySelectorAll('img,video')]
-      .map(element => ({element, area:visibleRect(element)}))
-      .filter(({element,area}) => {
-        const rect = element.getBoundingClientRect();
-        return area > 0 && rect.width >= 140 && rect.height >= 140;
-      })
-      .sort((a,b) => b.area-a.area)[0]?.element || null;
+    // Share the viewport scan within one synchronous refresh, never across
+    // scrolls/clicks where the active player may have changed.
+    if (detectionSnapshot && 'media' in detectionSnapshot) return detectionSnapshot.media;
+    let media = null, largest = 0;
+    for (const element of document.querySelectorAll('img,video')) {
+      const rect = element.getBoundingClientRect();
+      if (rect.width < 140 || rect.height < 140) continue;
+      const area = visibleRect(element);
+      if (area > largest) { media = element; largest = area; }
+    }
+    if (detectionSnapshot) detectionSnapshot.media = media;
+    return media;
   }
 
   function activeReelPost(seed) {
@@ -276,6 +290,7 @@
 
   globalThis.EagleDetection = {
     postPattern, storyRoute, linkInfo, postLinks, source, isRendered, visibleRect,
-    nativePlayback, largeMedia, findStoryRoot, bookmarkControl, classify, rootFor, isGridMedia
+    nativePlayback, largeMedia, findStoryRoot, bookmarkControl, classify, rootFor, isGridMedia,
+    dominantVisibleMedia, withSnapshot
   };
 })();

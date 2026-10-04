@@ -2,6 +2,23 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
+## 1.0.0
+
+- First stable release, carrying forward the tested Reel performance and control-placement fixes from 0.9.15.
+
+## 0.9.15
+
+- Version-only rebuild of 0.9.14, retaining the Reel performance fix with no additional runtime changes.
+
+## 0.9.14
+
+- Packaged the tested Reel performance fix from the rebuilt 0.9.13 package under a new version number; no additional runtime changes.
+
+## 0.9.13
+
+- Includes the tested Reel placement and spacing fixes from the rebuilt 0.9.12 package.
+- Fixed excessive Reel CPU work: throttle refreshes during native animation, reuse one active-media scan per refresh, skip offscreen layout work, and pause control refreshes in background tabs.
+
 ## 0.9.12
 
 - Added a grey circular background to Explore and search-grid hover controls, matching the timeline button.

@@ -110,9 +110,14 @@
     tiles.set(a,record);positionTile(a,record);scheduleHover();
   }
   function refresh() {
+    Detection.withSnapshot(refreshTiles);
+  }
+  function refreshTiles() {
     timer=null;
     const wanted=new Set();
-    for(const a of document.querySelectorAll('a[href]')) {
+    // The full-screen Reel viewer is owned by post controls, not tile controls.
+    const links=/^\/reels?(?:\/|$)/.test(location.pathname)?[]:document.querySelectorAll('a[href]');
+    for(const a of links) {
       if(isGridMedia(a))wanted.add(a);
     }
     for(const [a,record]of tiles)if(!a.isConnected||!wanted.has(a))removeTile(a,record);

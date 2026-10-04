@@ -60,6 +60,40 @@ module.exports = async ({evaluate,send,waitFor,ig,popup,delay,screenshot}) => {
   assert.equal(await evaluate(ig,`document.getElementById('reel-scroll').scrollTop`),0);
   console.log('PASS first Reel mounts after /reels -> /reels/shortcode and delayed layout, without scrolling');
   await screenshot('reel-captured-dom-firefox.png');
+  await delay(600);
+  const idleWrites = await evaluate(ig,`new Promise(resolve=>{
+    let writes=0;
+    const observer=new MutationObserver(records=>{writes+=records.filter(r=>
+      r.target instanceof Element && r.target.closest('[data-eagle-control],[data-eagle-group]')
+      || [...r.addedNodes,...r.removedNodes].some(n=>n instanceof Element && n.matches('[data-eagle-control],[data-eagle-group]'))
+    ).length;});
+    observer.observe(document.querySelector('main'),{childList:true,subtree:true,attributes:true});
+    setTimeout(()=>{observer.disconnect();resolve(writes);},1000);
+  })`);
+  console.log('Idle Reel control DOM writes per second:',idleWrites);
+  assert.ok(idleWrites<10,'idle Reel must not keep rewriting its own controls');
+  const countAnimatedRefreshes = () => evaluate(ig,`new Promise(resolve=>{
+    const progress=document.createElement('div');document.getElementById('reel-a').append(progress);
+    let refreshes=0,tick=0;
+    const observer=new MutationObserver(records=>{refreshes+=records.filter(r=>
+      r.attributeName==='data-eagle-post' && r.target.matches('#reel-a [data-eagle-control="media"]')
+    ).length;});
+    observer.observe(document.querySelector('main'),{subtree:true,attributes:true,attributeFilter:['data-eagle-post']});
+    const updates=setInterval(()=>{progress.style.opacity=String(++tick%2);},16);
+    setTimeout(()=>{clearInterval(updates);observer.disconnect();progress.remove();resolve(refreshes);},1000);
+  })`);
+  const busyRefreshes = await countAnimatedRefreshes();
+  console.log('Reel refreshes during 1s of native animation:',busyRefreshes);
+  assert.ok(busyRefreshes<=12,'native animation must not trigger a full Reel scan every frame');
+  const {context:backgroundTab}=await send('browsingContext.create',{type:'tab'});
+  await send('browsingContext.activate',{context:backgroundTab});
+  await waitFor(ig,'document.hidden');
+  const backgroundRefreshes = await countAnimatedRefreshes();
+  assert.equal(backgroundRefreshes,0,'background Reel tabs must not refresh controls');
+  await send('browsingContext.activate',{context:ig});
+  await send('browsingContext.close',{context:backgroundTab});
+  await check('reel-a','REAL_A');
+  console.log('PASS native updates in a background Reel tab cause zero control refreshes');
   console.log('PASS captured rail: Download is between Share and Save, despite nested buttons, audio image and audio link; correct Reel imports');
   const scrollMountMs = await evaluate(ig,`new Promise((resolve,reject)=>{
     const start=performance.now();
