@@ -48,7 +48,7 @@ After setting a new version in `manifest.json`, run:
 python tools/package_extension.py
 ```
 
-This creates a runtime-only unsigned XPI, a Chrome ZIP and a source ZIP under `dist/`. The Chrome ZIP is generated from the same files: its manifest runs the background scripts in a generated service worker, drops Firefox-only settings and adds the `offscreen` permission for the save chime. Existing archives are never overwritten. The 1.0.4 release archives remain local and ignored by Git; only older historical XPIs are tracked. See [release checks](RELEASE-CHECKS.md) for validation evidence and limitations.
+This creates a runtime-only unsigned XPI, a Chrome ZIP and a source ZIP under `dist/`. The Chrome ZIP is generated from the same files: its manifest runs the background scripts in a generated service worker, drops Firefox-only settings and adds the `offscreen` permission for the save chime. Existing archives are never overwritten. The 1.0.5 release archives remain local and ignored by Git; only older historical XPIs are tracked. See [release checks](RELEASE-CHECKS.md) for validation evidence and limitations.
 
 For Firefox public submission, run `python tools/prepare_amo.py` after packaging. Upload the unsigned XPI to the existing AMO entry with **On this site** selected; supply the `-amo-source.zip` if requested. The `-amo-submission.zip` is a convenience bundle, not the extension upload. For Chrome, upload the `-chrome.zip` to the Chrome Web Store item; listing copy, privacy-tab answers, and images are in [CHROME-WEB-STORE.md](CHROME-WEB-STORE.md). Building and pushing artifacts does not sign them, submit them, or establish store approval.
 

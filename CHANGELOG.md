@@ -2,6 +2,10 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
+## 1.0.5
+
+- Version-only Firefox rebuild of 1.0.4, with no runtime changes.
+
 ## 1.0.4
 
 - Removed the unused `activeTab` permission from both builds.

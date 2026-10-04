@@ -1,4 +1,4 @@
-# AMO listing — Instagram to Eagle 1.0.4
+# AMO listing — Instagram to Eagle 1.0.5
 
 Copy the text below into the existing AMO entry. The tested extension ID remains `instagram-to-eagle@local.karl`; creating a second add-on is unnecessary.
 
@@ -92,11 +92,11 @@ These screenshots show the actual 0.9.3 interface rendered by the Firefox test f
 
 Use [AMO-REVIEWER-NOTES.md](AMO-REVIEWER-NOTES.md) for the technical review field. Add any required test-account credentials only in AMO's private reviewer notes, never to this repository.
 
-Suggested 1.0.4 release note:
+Suggested 1.0.5 release note:
 
 Improved Reel performance and download-control placement. Control refreshes are throttled during native animations, avoid repeated media scans, and pause in background tabs. Includes a save-success chime. Removed the unused activeTab permission and made setup messages browser-neutral. A separate Chrome build is also available.
 
-On the existing entry, choose **Upload a New Version → Where to Host Version → On this site**, then upload `dist/instagram-to-eagle-1.0.4-unsigned.xpi`. If source is requested, upload `dist/instagram-to-eagle-1.0.4-amo-source.zip`. Do not upload the combined submission bundle as an extension or create a new add-on/change its ID. Original packages are retained. Artifact validation is recorded in [RELEASE-CHECKS.md](RELEASE-CHECKS.md). The supplied listing screenshots remain the historical 0.9.3 captures; review them before reusing them. Preparing these files does not submit or publish the version.
+On the existing entry, choose **Upload a New Version → Where to Host Version → On this site**, then upload `dist/instagram-to-eagle-1.0.5-unsigned.xpi`. If source is requested, upload `dist/instagram-to-eagle-1.0.5-amo-source.zip`. Do not upload the combined submission bundle as an extension or create a new add-on/change its ID. Original packages are retained. Artifact validation is recorded in [RELEASE-CHECKS.md](RELEASE-CHECKS.md). The supplied listing screenshots remain the historical 0.9.3 captures; review them before reusing them. Preparing these files does not submit or publish the version.
 
 ## Final account-only steps
 

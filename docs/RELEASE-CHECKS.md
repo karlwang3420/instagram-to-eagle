@@ -1,4 +1,14 @@
-# Publication checks — 1.0.4
+# Publication checks — 1.0.5 (Firefox)
+
+Version-only Firefox rebuild of 1.0.4. **Not submitted or signed** by this preparation. The Chrome Web Store item remains at 1.0.4, which is in review; do not upload the 1.0.5 Chrome ZIP unless a new Chrome version is needed.
+
+- Firefox: `dist/instagram-to-eagle-1.0.5-unsigned.xpi`. Upload to the existing AMO entry with **On this site** selected, keeping ID `instagram-to-eagle@local.karl`. Reviewer source: `dist/instagram-to-eagle-1.0.5-amo-source.zip`.
+- All 21 runtime members except `manifest.json` are byte-identical to the 1.0.4 XPI, and in the manifest only `version` changed (1.0.4 → 1.0.5).
+- `node tests/run.cjs` on Firefox 157.0: all 65 unit tests and all seven Firefox browser suites passed with the 1.0.5 manifest.
+- Mozilla Add-ons Linter 10.8.0 on the 1.0.5 runtime files: zero errors, zero notices, and the same four warnings documented for 1.0.3 (the inherited Android minimum version, plus three for Chrome's `offscreen` API in shared background code, which Firefox never reaches).
+- Local fixtures and mocked imports only; no live Instagram or Eagle testing, signing, or AMO approval is claimed.
+
+## Publication checks — 1.0.4
 
 Prepared for public Firefox and first-time Chrome Web Store submission. **Not submitted, signed, or store-approved** by this release preparation.
 
