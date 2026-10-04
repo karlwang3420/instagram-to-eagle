@@ -1,4 +1,27 @@
-# Publication checks — 0.9.4
+# Publication checks — 1.0.3
+
+Prepared for public Firefox and Chrome submission; **not submitted, signed, or store-approved** by this release preparation.
+
+## Release artifacts
+
+- Firefox: `dist/instagram-to-eagle-1.0.3-unsigned.xpi` — upload to the existing AMO entry with **On this site** selected. Desktop Firefox only; keep the existing ID `instagram-to-eagle@local.karl`.
+- Chrome: `dist/instagram-to-eagle-1.0.3-chrome.zip` — upload to the existing Chrome Web Store entry. Declares `minimum_chrome_version: "148"` for the native `browser` namespace and Promise-returning message listeners. Uses a generated MV3 service worker and the `offscreen` permission for the chime.
+- Source: `dist/instagram-to-eagle-1.0.3-source.zip`.
+- AMO reviewer source: `dist/instagram-to-eagle-1.0.3-amo-source.zip` — includes per-file hashes and reproduction instructions.
+- AMO materials bundle: `dist/instagram-to-eagle-1.0.3-amo-submission.zip` — convenience bundle, not an extension upload.
+
+## Validation evidence
+
+- `node tests/run.cjs`: all 64 original unit tests and all seven Firefox browser suites passed on Firefox 157.0 for version 1.0.3. After adding the Chrome minimum-version declaration, all 65 unit tests passed, including the new generated-manifest regression; Firefox runtime code is unchanged.
+- Packaged Firefox runtime: Reel and notification suites passed using an XPI; the final XPI has identical runtime member bytes to that tested archive.
+- Reel measurements: zero idle control DOM writes per second, nine refreshes during one second of animation, and zero refreshes in a background tab.
+- Chrome for Testing 153.0.8010.12: the generated package loaded as an unpacked extension; the service worker initialized, setup showed granted access and mocked Eagle status, and a trusted content-control click sent the selected carousel image through the worker to a mocked Eagle import. The success chime created its offscreen audio document; audible output was not verified.
+- Mozilla Add-ons Linter 10.13.0: zero errors, zero notices, four warnings. One is the inherited Android minimum-version/data-consent warning. Three flag Chrome's `offscreen` APIs in shared background code; Firefox's DOM `Audio` path returns before those calls. The Firefox notification suite verifies that sound path.
+- Packaging verifies archive integrity, runtime/source member contents, browser manifest differences, and reviewer-source reconstruction before pushing.
+
+These checks use local fixtures and mocked imports, not a live Instagram account or real Eagle downloads. The Chrome smoke check is not equivalent to the full Firefox suite and does not establish compatibility with older Chrome releases. No store validation, signing, approval, live/manual cross-browser testing, or determination of Mozilla's local-export data exception is claimed. Review listing content/screenshots, privacy disclosures, and account requirements before submission.
+
+## Historical publication checks — 0.9.4
 
 ## Public-channel package
 

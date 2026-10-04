@@ -7,6 +7,18 @@ const {execFileSync} = require('node:child_process');
 const root = path.resolve(__dirname, '../..');
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
 
+test('Chrome packaging declares its API minimum without changing the Firefox manifest', () => {
+  const chrome = JSON.parse(execFileSync('python', ['-c',
+    'import runpy; p=runpy.run_path("tools/package_extension.py"); print(p["chrome_files"]()["manifest.json"].decode())'],
+  {cwd: root, encoding: 'utf8'}));
+  assert.equal(chrome.minimum_chrome_version, '148');
+  assert.equal(chrome.version, manifest.version);
+  assert.deepEqual(chrome.background, {service_worker: 'service-worker.js'});
+  assert.ok(chrome.permissions.includes('offscreen'));
+  assert.equal(Object.hasOwn(chrome, 'browser_specific_settings'), false);
+  assert.equal(Object.hasOwn(manifest, 'minimum_chrome_version'), false);
+});
+
 test('runtime package includes every manifest and popup resource after file moves', () => {
   const packaging = JSON.parse(execFileSync('python', ['-c',
     'import json,runpy; p=runpy.run_path("tools/package_extension.py"); print(json.dumps({"runtime":p["RUNTIME"],"source":p["SOURCE"]}))'],

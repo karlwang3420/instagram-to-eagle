@@ -48,6 +48,8 @@ SOURCE = CHROME + [
 def chrome_files() -> dict[str, bytes]:
     """Chrome runs the Firefox background scripts in a service worker."""
     manifest = {key: value for key, value in MANIFEST.items() if key != "browser_specific_settings"}
+    # Native browser namespace and Promise-returning message listeners need Chrome 148+.
+    manifest["minimum_chrome_version"] = "148"
     manifest["background"] = {"service_worker": "service-worker.js"}
     manifest["permissions"] = [*MANIFEST["permissions"], "offscreen"]
     scripts = ", ".join(json.dumps("/" + path) for path in MANIFEST["background"]["scripts"])

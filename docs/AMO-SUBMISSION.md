@@ -1,4 +1,4 @@
-# AMO listing — Instagram to Eagle 0.9.4
+# AMO listing — Instagram to Eagle 1.0.3
 
 Copy the text below into the existing AMO entry. The tested extension ID remains `instagram-to-eagle@local.karl`; creating a second add-on is unnecessary.
 
@@ -92,11 +92,11 @@ These screenshots show the actual 0.9.3 interface rendered by the Firefox test f
 
 Use [AMO-REVIEWER-NOTES.md](AMO-REVIEWER-NOTES.md) for the technical review field. Add any required test-account credentials only in AMO's private reviewer notes, never to this repository.
 
-Suggested 0.9.4 release note:
+Suggested 1.0.3 release note:
 
-Prepared for public AMO distribution. Functionality is unchanged from 0.9.3, including the simplified popup and setup interface.
+Improved Reel performance and download-control placement. Control refreshes are throttled during native animations, avoid repeated media scans, and pause in background tabs. Includes a save-success chime. A separate Chrome build is also available.
 
-Version 0.9.3 was already uploaded and the publisher reported it working. Version 0.9.4 changes only the manifest version within the runtime package. On the existing entry, choose **Upload a New Version → Where to Host Version → On this site**, then upload the 0.9.4 XPI. Do not create a new add-on or change the ID. Original packages are retained. Artifact validation is recorded in [RELEASE-CHECKS.md](RELEASE-CHECKS.md). The supplied screenshots remain the 0.9.3 captures; the interface is unchanged apart from its displayed version.
+On the existing entry, choose **Upload a New Version → Where to Host Version → On this site**, then upload `dist/instagram-to-eagle-1.0.3-unsigned.xpi`. If source is requested, upload `dist/instagram-to-eagle-1.0.3-amo-source.zip`. Do not upload the combined submission bundle as an extension or create a new add-on/change its ID. Original packages are retained. Artifact validation is recorded in [RELEASE-CHECKS.md](RELEASE-CHECKS.md). The supplied listing screenshots remain the historical 0.9.3 captures; review them before reusing them. Preparing these files does not submit or publish the version.
 
 ## Final account-only steps
 

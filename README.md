@@ -2,15 +2,15 @@
 
 # Instagram to Eagle
 
-A Firefox extension that saves Instagram photos, videos, carousels, Reels, and Stories directly to your [Eagle](https://eagle.cool/) library, with a short title, source link, and optional tags.
+A Firefox and Chrome extension that saves Instagram photos, videos, carousels, Reels, and Stories directly to your [Eagle](https://eagle.cool/) library, with a short title, source link, and optional tags.
 
-[Download v0.9.4](https://github.com/karlwang3420/instagram-to-eagle/raw/refs/heads/main/dist/instagram-to-eagle-0.9.4-unsigned.xpi) · [Changelog](CHANGELOG.md) · [Development](docs/DEVELOPMENT.md) · [Privacy](PRIVACY.md)
+[Build v1.0.3 for Firefox and Chrome](docs/DEVELOPMENT.md#packaging) · [Changelog](CHANGELOG.md) · [Development](docs/DEVELOPMENT.md) · [Privacy](PRIVACY.md)
 
 ## Install
 
 You need desktop **Firefox 140+**, Eagle running with a library open, and an Instagram session in Firefox.
 
-1. Download the XPI using the link above.
+1. Build the unsigned XPI using the [packaging instructions](docs/DEVELOPMENT.md#packaging).
 2. Open `about:debugging#/runtime/this-firefox` in Firefox.
 3. Click **Load Temporary Add-on…** and select the downloaded XPI.
 4. On the setup page, click **Allow access** if prompted, then approve access to Instagram and Eagle on your computer.
@@ -22,7 +22,9 @@ To update, load the new XPI and reload your Instagram tabs. Reloading an older X
 
 ### Chrome
 
-1. Build the Chrome ZIP (see [Development](docs/DEVELOPMENT.md#packaging)) and extract it to a folder.
+Requires desktop **Chrome 148+**.
+
+1. Build the Chrome ZIP using [Development](docs/DEVELOPMENT.md#packaging) and extract it to a folder.
 2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and select the extracted folder.
 3. Reload your Instagram tabs.
 
@@ -35,7 +37,7 @@ Keep Eagle running while you save. Download buttons appear directly on Instagram
 | Single photo or video | Download button beside the bookmark |
 | Carousel | Top-right button for the current item; button beside the bookmark for the whole post |
 | Profile, Search or Saved grid | Hover or focus a thumbnail, then click its download button to save the whole post |
-| Reel player | Download button near the top-right playback controls |
+| Reel player | Download button between Share and Save; top-right fallback if the native action row cannot be identified |
 | Story viewer | **Current story** or **All available stories from this account** |
 
 Whole-post imports include images and videos in carousel order. If the extension cannot verify every item, it reports an error instead of importing an incomplete batch.

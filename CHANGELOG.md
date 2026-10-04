@@ -2,6 +2,12 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
+## 1.0.3
+
+- Combined the Reel performance fixes with Chrome support and the save-success chime in new Firefox and Chrome release packages.
+- Throttled Reel control refreshes, reused one active-media scan per refresh, skipped offscreen style work, and paused toolbar refreshes in background tabs.
+- Added regression coverage for Reel scan reuse, animation refresh limits, and background-tab behavior.
+
 ## 1.0.2
 
 - Added a Chrome build. Chrome runs the background scripts in a service worker and plays the chime from an offscreen page.

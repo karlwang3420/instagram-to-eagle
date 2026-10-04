@@ -34,6 +34,7 @@ Focused browser suites use `node tests/firefox.integration.cjs` with one of thes
 | `--profile-only` | Profile controls, settings, and mixed-media imports |
 | `--toast-only` | Notifications, dismissal, keyboard access, and narrow layouts |
 | `--detection-only` | Post boundaries, hidden native controls, ownership changes, and cleanup |
+| `--reels-only` | Reel entry, native action placement, animation throttling, and background-tab refreshes |
 
 The base flow uses `--inline --binding` and also exercises the structural carousel suite. The all-suite command runs that flow plus every focused suite. Screenshots are saved under `work/`; temporary browser profiles are removed after Firefox exits. Import assertions wait for results with bounded timeouts instead of assuming a fixed response time.
 
@@ -47,7 +48,9 @@ After setting a new version in `manifest.json`, run:
 python tools/package_extension.py
 ```
 
-This creates a runtime-only unsigned XPI, a Chrome ZIP and a source ZIP under `dist/`. The Chrome ZIP is generated from the same files: its manifest runs the background scripts in a generated service worker, drops Firefox-only settings and adds the `offscreen` permission for the save chime. Existing archives are never overwritten. The tracked 0.9.4 XPI is a version-only increment of 0.9.3 for public-channel submission; other local archives are ignored by Git. The publisher subsequently reported 0.9.3 working. See [release checks](RELEASE-CHECKS.md) for the archive comparison and linter results.
+This creates a runtime-only unsigned XPI, a Chrome ZIP and a source ZIP under `dist/`. The Chrome ZIP is generated from the same files: its manifest runs the background scripts in a generated service worker, drops Firefox-only settings and adds the `offscreen` permission for the save chime. Existing archives are never overwritten. The 1.0.3 release archives remain local and ignored by Git; only older historical XPIs are tracked. See [release checks](RELEASE-CHECKS.md) for validation evidence and limitations.
+
+For Firefox public submission, run `python tools/prepare_amo.py` after packaging. Upload the unsigned XPI to the existing AMO entry with **On this site** selected; supply the `-amo-source.zip` if requested. The `-amo-submission.zip` is a convenience bundle, not the extension upload. For Chrome, upload the `-chrome.zip` to the existing Chrome Web Store entry. Building and pushing artifacts does not sign them, submit them, or establish store approval.
 
 Use the XPI for Mozilla signing, since it excludes development files and test fixtures. See Mozilla's [signing and distribution guide](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/).
 
