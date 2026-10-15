@@ -4,29 +4,17 @@
 
 A Firefox and Chrome extension that saves Instagram photos, videos, carousels, Reels, and Stories directly to your [Eagle](https://eagle.cool/) library, with a short title, source link, and optional tags.
 
-[Build v1.0.5 for Firefox and Chrome](docs/DEVELOPMENT.md#packaging) · [Changelog](CHANGELOG.md) · [Development](docs/DEVELOPMENT.md) · [Privacy](PRIVACY.md)
+[Firefox Add-ons](https://addons.mozilla.org/firefox/addon/instagram-to-eagle/) · [Chrome Web Store](https://chromewebstore.google.com/detail/instagram-to-eagle/kcbhpiojkhdfflhoepkonoobinkdkhpo) · [Changelog](CHANGELOG.md) · [Development](docs/DEVELOPMENT.md) · [Privacy](PRIVACY.md)
 
 ## Install
 
-You need desktop **Firefox 140+**, Eagle running with a library open, and an Instagram session in Firefox.
+You need desktop **Firefox 140+** or **Chrome 148+**, Eagle running with a library open, and an Instagram session in the same browser.
 
-1. Build the unsigned XPI using the [packaging instructions](docs/DEVELOPMENT.md#packaging).
-2. Open `about:debugging#/runtime/this-firefox` in Firefox.
-3. Click **Load Temporary Add-on…** and select the downloaded XPI.
-4. On the setup page, click **Allow access** if prompted, then approve access to Instagram and Eagle on your computer.
-5. Reload your Instagram tabs. Open the extension popup to choose an Eagle folder and tag preferences.
+1. Install from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/instagram-to-eagle/) or the [Chrome Web Store](https://chromewebstore.google.com/detail/instagram-to-eagle/kcbhpiojkhdfflhoepkonoobinkdkhpo).
+2. On the setup page, click **Allow access** if prompted, then approve access to Instagram and Eagle on your computer.
+3. Reload your Instagram tabs. Open the extension popup to choose an Eagle folder and tag preferences.
 
-The current build is **unsigned** and is removed when Firefox restarts. A permanent installation requires a [Mozilla-signed build](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/).
-
-To update, load the new XPI and reload your Instagram tabs. Reloading an older XPI does not replace its contents.
-
-### Chrome
-
-Requires desktop **Chrome 148+**.
-
-1. Build the Chrome ZIP using [Development](docs/DEVELOPMENT.md#packaging) and extract it to a folder.
-2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and select the extracted folder.
-3. Reload your Instagram tabs.
+Both stores update the extension automatically. After an update, reload your Instagram tabs.
 
 ## Save media
 
@@ -60,6 +48,8 @@ Turn all three off to import without tags. Each item keeps a short title and its
 - Videos require a direct media file. Streams available only as DASH/HLS segments are unsupported.
 - Stories must be available to your current session. Highlights, archives, and expired Stories are unsupported, and Story source links may stop working after expiry.
 - Saving an entire profile and right-click menu downloads are not supported.
+
+Found a broken post or want a feature? [Open an issue](https://github.com/karlwang3420/instagram-to-eagle/issues).
 
 ## Privacy
 
