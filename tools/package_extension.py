@@ -15,6 +15,7 @@ RUNTIME = [
     "popup/popup.js",
     "popup/popup.css",
     "background/access.js",
+    "background/chime.js",
     "shared/core.js",
     "page/posts.js",
     "page/stories.js",
@@ -27,8 +28,11 @@ RUNTIME = [
     "sounds/success.ogg",
     *(f"icons/icon-{size}.png" for size in (16, 32, 48, 96, 128)),
 ]
-CHROME = RUNTIME + ["sounds/chime.html"]
-SOURCE = CHROME + [
+CHROME = [path for path in RUNTIME if path != "background/chime.js"] + [
+    "background/chime-chrome.js",
+    "sounds/chime.html",
+]
+SOURCE = list(dict.fromkeys(RUNTIME + CHROME)) + [
     "icon.svg",
     "README.md",
     "CHANGELOG.md",
@@ -52,7 +56,9 @@ def chrome_files() -> dict[str, bytes]:
     manifest["minimum_chrome_version"] = "148"
     manifest["background"] = {"service_worker": "service-worker.js"}
     manifest["permissions"] = [*MANIFEST["permissions"], "offscreen"]
-    scripts = ", ".join(json.dumps("/" + path) for path in MANIFEST["background"]["scripts"])
+    scripts = ", ".join(json.dumps("/" + (
+        "background/chime-chrome.js" if path == "background/chime.js" else path
+    )) for path in MANIFEST["background"]["scripts"])
     return {
         "manifest.json": (json.dumps(manifest, indent=2, ensure_ascii=False) + "\n").encode(),
         "service-worker.js": f"importScripts({scripts});\n".encode(),

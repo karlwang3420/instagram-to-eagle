@@ -193,8 +193,8 @@
         const mode = context.isStory ? (kind === "all" ? "stories" : "story") : kind === "all" && record.isCarousel ? "post" : record.isReel ? "reel" : context.current?.type === "video" ? "video" : "current";
         inlineIntents.set(marker, { context, mode, created: Date.now() });
         const reply = await browser.runtime.sendMessage({ type: "eagle:inline", marker, mode });
-        if (!reply?.ok) throw new Error(reply?.error || "Reload the add-on and this Instagram tab, then retry.");
-      } catch (err) { toast(err.message, true); }
+        if (!reply?.ok) throw Object.assign(new Error(reply?.error || "Reload the add-on and this Instagram tab, then retry."), { code: reply?.code });
+      } catch (err) { toast(err.message, true, err.code); }
       finally {
         inlineIntents.delete(marker); inlineBusy = false;
         for (const item of toolbars.values()) for (const control of controlsFor(item)) control.button.disabled = false;
@@ -507,6 +507,6 @@
       if (!selection) return Promise.resolve({ ok: false, error: "Select the post again." });
       return carousel(selection).then(data => ({ ok: true, ...data }), e => ({ ok: false, error: e.message }));
     }
-    if (message.type === "eagle:toast") toast(message.text, message.failed);
+    if (message.type === "eagle:toast") toast(message.text, message.failed, message.code);
   });
 })();

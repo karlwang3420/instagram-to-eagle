@@ -19,6 +19,31 @@ test('Chrome packaging declares its API minimum without changing the Firefox man
   assert.equal(Object.hasOwn(manifest, 'minimum_chrome_version'), false);
 });
 
+test('browser packages include only their own chime implementation', () => {
+  const packaging = JSON.parse(execFileSync('python', ['-c',
+    'import json,runpy; p=runpy.run_path("tools/package_extension.py"); print(json.dumps({"runtime":p["RUNTIME"],"chrome":p["CHROME"],"source":p["SOURCE"],"worker":p["chrome_files"]()["service-worker.js"].decode()}))'],
+  {cwd: root, encoding: 'utf8'}));
+  assert.ok(manifest.background.scripts.includes('background/chime.js'));
+  assert.ok(packaging.runtime.includes('background/chime.js'));
+  assert.ok(!packaging.runtime.includes('background/chime-chrome.js'));
+  assert.ok(!packaging.runtime.includes('sounds/chime.html'));
+  for (const file of packaging.runtime.filter(file => file.endsWith('.js'))) {
+    assert.doesNotMatch(fs.readFileSync(path.join(root, file), 'utf8'), /\boffscreen\b/, file);
+  }
+  assert.ok(packaging.chrome.includes('background/chime-chrome.js'));
+  assert.ok(packaging.chrome.includes('sounds/chime.html'));
+  assert.ok(!packaging.chrome.includes('background/chime.js'));
+  const imports = [];
+  require('node:vm').runInNewContext(packaging.worker, {importScripts: (...files) => imports.push(...files)});
+  assert.deepEqual(imports, manifest.background.scripts.map(file => '/' + (
+    file === 'background/chime.js' ? 'background/chime-chrome.js' : file
+  )));
+  for (const file of imports) assert.ok(packaging.chrome.includes(file.slice(1)), `Missing worker script: ${file}`);
+  assert.ok(packaging.source.includes('background/chime.js'));
+  assert.ok(packaging.source.includes('background/chime-chrome.js'));
+  assert.equal(new Set(packaging.source).size, packaging.source.length);
+});
+
 test('runtime package includes every manifest and popup resource after file moves', () => {
   const packaging = JSON.parse(execFileSync('python', ['-c',
     'import json,runpy; p=runpy.run_path("tools/package_extension.py"); print(json.dumps({"runtime":p["RUNTIME"],"source":p["SOURCE"]}))'],

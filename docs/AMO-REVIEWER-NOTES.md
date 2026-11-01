@@ -1,4 +1,4 @@
-# Reviewer notes — Instagram to Eagle 1.0.5
+# Reviewer notes — Instagram to Eagle 1.0.7
 
 Requires desktop Firefox 140+, Eagle running with a library open, and an Instagram login. Tested on Windows; Android is unsupported. Eagle is paid software with a trial: https://eagle.cool/.
 
@@ -16,7 +16,7 @@ Selected media URLs and metadata go to Eagle at `http://127.0.0.1:41595`; Eagle 
 
 The manifest declares `none` based on user-initiated local export. Please confirm whether export to a local application qualifies for the local-backup exception; no Mozilla determination has been obtained.
 
-Readable source is bundled without compilation or minification. Version 1.0.5 is a version-only rebuild of 1.0.4. Version 1.0.4 removes the unused `activeTab` permission and makes setup messages browser-neutral. It retains 1.0.3's Reel performance and control-placement fixes, the save-success chime, and separate Chrome packaging. The Firefox XPI retains its background scripts and existing extension ID. The separate Chrome ZIP uses a generated service worker and an offscreen page to play the chime; it is not part of the Firefox runtime.
+Readable source is bundled without compilation or minification. Version 1.0.7 adds a dialog when a download is clicked while Eagle is closed. Its Open Eagle button is an ordinary `eagle://open` link, Eagle's registered URL scheme, followed only when the user clicks it; permissions and data handling are unchanged. Version 1.0.6, which was not submitted, separated the browser-specific save chime scripts, removing Chrome's offscreen API calls from the Firefox runtime and eliminating three unsupported-API validation warnings. Firefox continues playing packaged audio directly from its background page. Version 1.0.5 was a version-only rebuild of 1.0.4. Version 1.0.4 removes the unused `activeTab` permission and makes setup messages browser-neutral. It retains 1.0.3's Reel performance and control-placement fixes, the save-success chime, and separate Chrome packaging. The Firefox XPI retains its background scripts and existing extension ID. The separate Chrome ZIP uses a generated service worker and an offscreen page to play the chime; it is not part of the Firefox runtime.
 
 To reproduce the reviewed Firefox runtime members, extract the reviewer source ZIP and run `python tools/prepare_amo.py --rebuild-reviewed`. This verifies each runtime file against the supplied hashes; ZIP timestamps may differ.
 

@@ -59,7 +59,7 @@ async function clickControl(context, kind = 'media', code = 'B') {
       'network.proxy.allow_hijacking_localhost': true
     });
     const port = 20000 + Math.floor(Math.random() * 10000);
-    child = spawn(firefox, ['--headless', '--no-remote', '--profile', testProfile, '--remote-debugging-port', String(port), '--remote-allow-system-access', 'about:blank'], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    child = spawn(firefox, ['--headless', '--no-remote', '--profile', testProfile, '--remote-debugging-port', String(port), '--remote-allow-system-access', 'about:blank'], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1' } });
     child.stderr.on('data', d => { logs += d; }); child.stdout.on('data', d => { logs += d; });
     for (let i = 0; i < 100; i++) {
       try { ws = new WebSocket(`ws://127.0.0.1:${port}/session`); await new Promise((r, j) => { ws.onopen = r; ws.onerror = j; }); break; }
@@ -97,7 +97,17 @@ async function clickControl(context, kind = 'media', code = 'B') {
     const { context: ig } = await send('browsingContext.create', { type: 'tab' });
     await send('browsingContext.navigate', { context: ig, url: 'https://www.instagram.com/', wait: 'complete' });
     const { context: popup } = await send('browsingContext.create', { type: 'tab' });
-    await send('browsingContext.navigate', { context: popup, url: 'moz-extension://353c8f5f-334f-48b0-8ff5-80f36bda6801/popup/popup.html', wait: 'complete' });
+    // Firefox 159 refuses BiDi navigation to extension pages, so load the popup from browser chrome.
+    const popupURL = 'moz-extension://353c8f5f-334f-48b0-8ff5-80f36bda6801/popup/popup.html';
+    const { contexts: [chromeWindow] } = await send('browsingContext.getTree', { 'moz:scope': 'chrome', maxDepth: 0 });
+    await send('script.evaluate', { target: { context: chromeWindow.context }, awaitPromise: false, expression: `gBrowser.selectedBrowser.fixupAndLoadURIString(${JSON.stringify(popupURL)},{triggeringPrincipal:Services.scriptSecurityManager.getSystemPrincipal()})` });
+    for (let i = 0; ; i++) {
+      const { contexts: [tab] } = await send('browsingContext.getTree', { root: popup, maxDepth: 0 });
+      if (tab.url === popupURL) break;
+      if (i === 50) throw new Error('Extension popup did not load: ' + tab.url);
+      await delay(100);
+    }
+    await delay(300);
     const status = await evaluate(popup, `(async()=>{window.bg=await browser.runtime.getBackgroundPage(); const x=await bg.eagle('/api/application/info');return x.version})()`);
     assert.equal(status, '4.0.0'); console.log('PASS extension host permission and CSP reach the mocked Eagle API');
     assert.ok(eagleProxy.requests.some(request => request.path === '/api/application/info'));

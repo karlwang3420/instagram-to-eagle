@@ -1,4 +1,45 @@
-# Publication checks — 1.0.5 (Firefox)
+# Publication checks — 1.0.7
+
+Prepared locally; **not submitted, signed, or store-approved**. The existing Firefox 1.0.5 and Chrome 1.0.4 submissions are unchanged. Version 1.0.6 was never submitted, so 1.0.7 also carries its chime split.
+
+## Changes and artifacts
+
+- Clicking download while Eagle is closed shows a centered dialog a third of the way down the window. Its Open Eagle button is an `eagle://open` link. No permissions changed.
+- The dialog appears after 500 ms while the connection check continues. Firefox took about 4 seconds to fail against a closed local port on Windows 11, measured without a proxy. A slow but running Eagle clears the dialog and still saves.
+- Firefox: `dist/instagram-to-eagle-1.0.7-unsigned.xpi`. Keep the existing ID `instagram-to-eagle@local.karl` and use **On this site** when submitting a new version.
+- AMO reviewer source: `dist/instagram-to-eagle-1.0.7-amo-source.zip`. The `-amo-submission.zip` is a convenience bundle, not an extension upload.
+- Chrome and full source: `dist/instagram-to-eagle-1.0.7-chrome.zip` and `dist/instagram-to-eagle-1.0.7-source.zip`.
+- All previous release packages are retained.
+
+## Validation evidence
+
+- `node tests/run.cjs` on Firefox 159.0: all 69 unit tests and all seven Firefox browser suites passed with the 1.0.7 manifest. The harness now loads the popup from browser chrome, because Firefox 159 refuses BiDi navigation to extension pages.
+- An XPI with the same runtime files passed the notification suite, including the delayed-failure and slow-Eagle dialog paths.
+- Mozilla Add-ons Linter 10.8.0 on that XPI: zero errors, zero notices, **one warning** for the inherited Android minimum-version/data-consent mismatch.
+- The owner tested test builds on live Instagram in Firefox and Chrome with Eagle closed on November 1, 2026 and reported the dialog working in both. This was not an agent-observed test, and it does not establish that Open Eagle launched the app or that the Chrome chime still plays.
+- Automated checks use local fixtures and mocked imports; no signing or store approval is claimed.
+
+## Historical publication checks — 1.0.6
+
+Prepared locally; never submitted, signed, or store-approved.
+
+## Changes and artifacts
+
+- Browser-specific chime scripts replace the shared audio function. Firefox uses direct background-page audio; only Chrome includes the offscreen APIs and audio page.
+- Firefox: `dist/instagram-to-eagle-1.0.6-unsigned.xpi`. Keep the existing ID `instagram-to-eagle@local.karl` and use **On this site** when submitting a new version.
+- AMO reviewer source: `dist/instagram-to-eagle-1.0.6-amo-source.zip`. The `-amo-submission.zip` is a convenience bundle, not an extension upload.
+- Chrome and full source: `dist/instagram-to-eagle-1.0.6-chrome.zip` and `dist/instagram-to-eagle-1.0.6-source.zip`. The new Chrome package is available locally; no new store submission is implied.
+- All previous release packages are retained.
+
+## Validation evidence
+
+- `node tests/run.cjs` on Firefox 157.0: all 69 unit tests and all seven Firefox browser suites passed with the 1.0.6 manifest.
+- The packaged 1.0.6 Firefox XPI passed the notification suite, including background-page sound playback and mocked current/all-image imports.
+- Mozilla Add-ons Linter 10.8.0 on the 1.0.6 XPI: zero errors, zero notices, **one warning** for the inherited Android minimum-version/data-consent mismatch. The three unsupported offscreen API warnings are gone.
+- Unit tests cover Chrome offscreen audio creation/replacement and generated-worker imports. A real Chrome browser smoke test was not repeated for 1.0.6.
+- Local fixtures and mocked imports only; no live Instagram or Eagle testing, audible-output confirmation, signing, or store approval is claimed.
+
+## Historical publication checks — 1.0.5 (Firefox)
 
 Version-only Firefox rebuild of 1.0.4.
 

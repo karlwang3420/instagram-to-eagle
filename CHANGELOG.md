@@ -2,6 +2,16 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
+## 1.0.7
+
+- Clicking download while Eagle is closed now shows a centered dialog in the upper part of the window, with an Open Eagle button that launches the desktop app. Other notices stay at the bottom right.
+- The dialog appears after half a second, even where Windows makes the failed connection take seconds. A slow but running Eagle clears the dialog and still completes the save.
+- Browser tests run on Firefox 159, which no longer lets the test driver navigate to extension pages.
+
+## 1.0.6
+
+- Split Firefox and Chrome chime implementations so the Firefox XPI no longer contains unsupported Chrome offscreen APIs, removing three AMO validation warnings.
+
 ## 1.0.5
 
 - Version-only Firefox rebuild of 1.0.4, with no runtime changes.

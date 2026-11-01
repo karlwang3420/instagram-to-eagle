@@ -102,9 +102,9 @@
         intents.set(actionMarker,{context,mode:'grid',created:Date.now()});
         try {
           const reply=await browser.runtime.sendMessage({type:'eagle:profile-action',marker:actionMarker,mode:'grid'});
-          if(!reply?.ok)throw new Error(reply?.error||'Could not save this post.');
+          if(!reply?.ok)throw Object.assign(new Error(reply?.error||'Could not save this post.'),{code:reply?.code});
         }finally{intents.delete(actionMarker);}
-      }catch(error){toast(error.message,true);}
+      }catch(error){toast(error.message,true,error.code);}
       finally{b.disabled=false;if(a.getAttribute('data-eagle-selection')===marker)a.removeAttribute('data-eagle-selection');}
     };
     tiles.set(a,record);positionTile(a,record);scheduleHover();

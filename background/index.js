@@ -16,7 +16,7 @@ async function eagle(path, body) {
     });
   } catch (e) {
     if (body) throw new Error("Eagle did not confirm the import. Check Eagle before retrying to avoid duplicates.");
-    throw new Error("Open Eagle and its library, then retry. The local API on port 41595 is not responding.");
+    throw Object.assign(new Error("Open Eagle and its library, then retry. The local API on port 41595 is not responding."), { code: "eagle-offline" });
   }
   if (!response.ok) throw new Error(`Eagle returned HTTP ${response.status}. Check that Eagle is up to date and its API is enabled.`);
   const data = await response.json();
@@ -44,14 +44,19 @@ async function extract(tabId, context, network, mode) {
   const { post, note, activeMediaIds } = results[0]?.result || {};
   return { ...EagleCore.normalize(post, context), note, activeMediaIds };
 }
-async function notify(tabId, text, failed = false) {
-  try { await browser.tabs.sendMessage(tabId, { type: "eagle:toast", text, failed }); } catch { /* User closed tab. */ }
+async function notify(tabId, text, failed = false, code = "") {
+  try { await browser.tabs.sendMessage(tabId, { type: "eagle:toast", text, failed, code }); } catch { /* User closed tab. */ }
 }
-async function chime() {
-  if (globalThis.Audio) return new Audio(browser.runtime.getURL("sounds/success.ogg")).play();
-  // Chrome's service worker has no DOM audio; an offscreen page plays and closes itself when idle.
-  if (await browser.offscreen.hasDocument()) await browser.offscreen.closeDocument();
-  await browser.offscreen.createDocument({ url: "sounds/chime.html", reasons: ["AUDIO_PLAYBACK"], justification: "Play a chime when a save is sent to Eagle." });
+// Firefox on Windows can take about 2 seconds to fail against a closed local port.
+// Prompt early but let the check finish, so a busy Eagle still completes the save.
+async function requireEagle(tabId) {
+  let prompted = false;
+  const early = setTimeout(() => { prompted = true; notify(tabId, "", true, "eagle-offline"); }, 500);
+  try { await eagle("/api/application/info"); }
+  catch (e) {
+    if (prompted && e.code === "eagle-offline") e.code = "eagle-prompted";
+    throw e;
+  } finally { clearTimeout(early); }
 }
 async function preview(tabId) {
   const context = await selection(tabId);
@@ -78,7 +83,7 @@ async function save(tabId, context, mode) {
   if (jobs.has(tabId)) throw new Error("An import is already running for this tab.");
   jobs.add(tabId);
   try {
-    await eagle("/api/application/info");
+    await requireEagle(tabId);
     await notify(tabId, "Reading post metadata…");
     const result = await extract(tabId, context, true, mode);
     if (["all","post"].includes(mode) && !result.complete && !context.isGrid) {
@@ -139,7 +144,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
         const reply=await browser.tabs.sendMessage(sender.tab.id,{type:'eagle:resolve-profile',marker:message.marker,mode:message.mode},{frameId:0});
         if(!reply?.ok) throw new Error(reply?.error||'Select the profile control again.');
         return save(sender.tab.id,reply.context,'post');
-      })().then(data=>({ok:true,data}),e=>({ok:false,error:e.message}));
+      })().then(data=>({ok:true,data}),e=>({ok:false,error:e.message,code:e.code}));
     }
   }
   // An inline request contains a one-use click marker, never arbitrary URLs.
@@ -150,7 +155,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
       const reply = await browser.tabs.sendMessage(tab.id, { type: "eagle:resolve-inline", marker: message.marker, mode: message.mode }, { frameId: 0 });
       if (!reply?.ok) throw new Error(reply?.error || "Click the Eagle button on the post again.");
       return save(tab.id, reply.context, message.mode);
-    })().then(data => ({ ok: true, data }), e => ({ ok: false, error: e.message }));
+    })().then(data => ({ ok: true, data }), e => ({ ok: false, error: e.message, code: e.code }));
   }
   const popup = sender.url === browser.runtime.getURL('popup/popup.html') && !sender.tab;
   const setup = sender.url === browser.runtime.getURL('popup/popup.html?setup=1') && sender.frameId === 0;

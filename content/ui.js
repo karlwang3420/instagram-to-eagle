@@ -22,9 +22,89 @@
     return icon(downloadPath);
   }
 
-  function toast(text, failed = false) {
+  // Centered prompt, a third of the way down the window, for a closed Eagle. It shares the toast's slot, so any later notice replaces it.
+  function offlineDialog() {
+    const box = document.createElement('div');
+    box.id = 'instagram-eagle-status';
+    box.style.cssText = 'all:initial;position:fixed;inset:33vh auto auto 50%;transform:translateX(-50%);z-index:2147483647;display:block;width:min(380px,calc(100vw - 32px));box-sizing:border-box;color-scheme:dark';
+    const shadow = box.attachShadow({ mode: 'closed' });
+    const style = document.createElement('style');
+    style.textContent = `
+      .dialog{padding:18px 18px 16px;border:1px solid #ffffff2e;border-radius:12px;background:#232627;color:#f0f1f1;box-shadow:0 10px 36px #0006;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;animation:eagle-dialog-in 160ms ease-out}
+      h2{margin:0 0 6px;font:600 16px/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      p{margin:0;color:#c9cdce;overflow-wrap:anywhere}
+      .actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:14px}
+      a,button{all:unset;box-sizing:border-box;padding:7px 14px;border-radius:7px;font-weight:600;cursor:pointer}
+      a{background:#a5d5b7;color:#16201a}a:hover{background:#bce3ca}
+      button{color:#f0f1f1;background:#ffffff14}button:hover{background:#ffffff24}
+      a:focus-visible,button:focus-visible{outline:2px solid #a5d5b7;outline-offset:2px}
+      @keyframes eagle-dialog-in{from{opacity:0;margin-top:-6px}to{opacity:1;margin-top:0}}
+      @media(prefers-reduced-motion:reduce){.dialog{animation:none}}
+    `;
+    const dialog = document.createElement('div');
+    dialog.className = 'dialog';
+    dialog.setAttribute('role', 'alertdialog');
+    dialog.setAttribute('aria-labelledby', 'title');
+    dialog.setAttribute('aria-describedby', 'description');
+    const title = document.createElement('h2');
+    title.id = 'title';
+    title.textContent = "Eagle isn't open";
+    const description = document.createElement('p');
+    description.id = 'description';
+    description.append(document.createElement('slot'));
+    // A real link keeps the click's user gesture, and needs no permission or frame on Instagram's page.
+    const open = document.createElement('a');
+    open.href = 'eagle://open';
+    open.textContent = 'Open Eagle';
+    const later = document.createElement('button');
+    later.type = 'button';
+    later.textContent = 'Not now';
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    actions.append(later, open);
+    dialog.append(title, description, actions);
+    shadow.append(style, dialog);
+    let timer;
+    const onKey = event => {
+      if (event.key !== 'Escape') return;
+      // Escape belongs to this prompt, not to an Instagram post viewer underneath it.
+      event.preventDefault();
+      event.stopPropagation();
+      dismiss();
+    };
+    const dismiss = () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', onKey, true);
+      box.remove();
+      if (dismissToast === dismiss) dismissToast = null;
+    };
+    // Instagram must not treat clicks here as clicks outside its post viewer.
+    dialog.addEventListener('click', event => event.stopPropagation());
+    later.addEventListener('click', dismiss);
+    open.addEventListener('click', () => {
+      setTimeout(() => {
+        if (dismissToast !== dismiss) return;
+        title.textContent = 'Opening Eagle…';
+        box.textContent = 'If your browser asks, allow it. Click download again once Eagle has loaded.';
+        open.remove();
+        later.textContent = 'Dismiss';
+        later.focus({ preventScroll: true });
+        timer = setTimeout(dismiss, 10000);
+      });
+    });
+    window.addEventListener('keydown', onKey, true);
+    dismissToast = dismiss;
+    document.documentElement.append(box);
+    box.textContent = 'Open Eagle to save this to your library. Once it has loaded, click download again.';
+    open.focus({ preventScroll: true });
+  }
+
+  function toast(text, failed = false, code = '') {
+    // The early prompt already answered this click; the user may have acted on it.
+    if (code === 'eagle-prompted') return;
     dismissToast?.();
     document.getElementById('instagram-eagle-status')?.remove();
+    if (code === 'eagle-offline') return offlineDialog();
     const box = document.createElement('div');
     box.id = 'instagram-eagle-status';
     box.style.cssText = 'all:initial;position:fixed;inset:auto 16px 16px auto;z-index:2147483647;display:block;width:max-content;max-width:min(320px,calc(100vw - 32px));box-sizing:border-box;color-scheme:dark';

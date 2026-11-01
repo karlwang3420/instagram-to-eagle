@@ -1,4 +1,4 @@
-# AMO listing — Instagram to Eagle 1.0.5
+# AMO listing — Instagram to Eagle 1.0.7
 
 Copy the text below into the existing AMO entry. The tested extension ID remains `instagram-to-eagle@local.karl`; creating a second add-on is unnecessary.
 
@@ -96,9 +96,13 @@ Release note submitted with 1.0.5 (relative to the previously listed 1.0.0):
 
 Plays a short chime when a save is sent to Eagle. Removed an unused browser permission.
 
-1.0.5 was submitted for public review on October 4, 2026.
+1.0.5 was submitted for public review on October 4, 2026. Version 1.0.7 is a new local build, not yet submitted.
 
-On the existing entry, choose **Upload a New Version → Where to Host Version → On this site**, then upload `dist/instagram-to-eagle-1.0.5-unsigned.xpi`. If source is requested, upload `dist/instagram-to-eagle-1.0.5-amo-source.zip`. Do not upload the combined submission bundle as an extension or create a new add-on/change its ID. Original packages are retained. Artifact validation is recorded in [RELEASE-CHECKS.md](RELEASE-CHECKS.md). The supplied listing screenshots remain the historical 0.9.3 captures; review them before reusing them. Preparing these files does not submit or publish the version.
+Release note for 1.0.7:
+
+Asks whether to open Eagle when you click download while it is closed. Also separates Firefox and Chrome audio code to remove three unsupported-API validation warnings; the save-success chime is unchanged.
+
+On the existing entry, choose **Upload a New Version → Where to Host Version → On this site**, then upload `dist/instagram-to-eagle-1.0.7-unsigned.xpi`. If source is requested, upload `dist/instagram-to-eagle-1.0.7-amo-source.zip`. Do not upload the combined submission bundle as an extension or create a new add-on/change its ID. Original packages are retained. Artifact validation is recorded in [RELEASE-CHECKS.md](RELEASE-CHECKS.md). The supplied listing screenshots remain the historical 0.9.3 captures; review them before reusing them. Preparing these files does not submit or publish the version.
 
 ## Final account-only steps
 

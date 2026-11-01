@@ -48,7 +48,7 @@ After setting a new version in `manifest.json`, run:
 python tools/package_extension.py
 ```
 
-This creates a runtime-only unsigned XPI, a Chrome ZIP and a source ZIP under `dist/`. The Chrome ZIP is generated from the same files: its manifest runs the background scripts in a generated service worker, drops Firefox-only settings and adds the `offscreen` permission for the save chime. Existing archives are never overwritten. Archives in `dist/` are ignored by Git. See [release checks](RELEASE-CHECKS.md) for validation evidence and limitations.
+This creates a runtime-only unsigned XPI, a Chrome ZIP and a source ZIP under `dist/`. The Chrome ZIP uses shared runtime files with a browser-specific chime script: its manifest runs the background scripts in a generated service worker, drops Firefox-only settings and adds the `offscreen` permission for the save chime. Firefox loads `background/chime.js` for direct audio playback; Chrome substitutes `background/chime-chrome.js` and includes `sounds/chime.html`. Chrome's offscreen APIs are excluded from the Firefox runtime; the source ZIP includes both implementations. Existing archives are never overwritten. Archives in `dist/` are ignored by Git. See [release checks](RELEASE-CHECKS.md) for validation evidence and limitations.
 
 For Firefox public submission, run `python tools/prepare_amo.py` after packaging. Upload the unsigned XPI to the existing AMO entry with **On this site** selected; supply the `-amo-source.zip` if requested. The `-amo-submission.zip` is a convenience bundle, not the extension upload. For Chrome, upload the `-chrome.zip` to the Chrome Web Store item; listing copy, privacy-tab answers, and images are in [CHROME-WEB-STORE.md](CHROME-WEB-STORE.md). Building and pushing artifacts does not sign them, submit them, or establish store approval.
 
@@ -75,6 +75,7 @@ The manifest and popup reference the generated files in `icons/`.
 | `page/posts.js`, `page/stories.js` | On-demand extraction in Instagram's page context |
 | `shared/core.js` | Pure media normalization, metadata, and Eagle payloads |
 | `background/index.js`, `background/access.js` | Privileged messaging, import orchestration, Eagle transport, permissions |
+| `background/chime.js`, `background/chime-chrome.js` | Browser-specific save-success audio |
 | `popup/` | Setup, connection status, folders, and tag settings |
 | `tests/unit/`, `tests/browser/` | Pure logic checks and Firefox behavior suites |
 | `tests/fixtures/`, `tests/helpers/` | Local page fixtures and browser test infrastructure |
