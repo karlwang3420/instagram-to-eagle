@@ -1,6 +1,13 @@
 # Publication checks — 1.0.7
 
-Prepared locally; **not submitted, signed, or store-approved**. The existing Firefox 1.0.5 and Chrome 1.0.4 submissions are unchanged. Version 1.0.6 was never submitted, so 1.0.7 also carries its chime split.
+Version 1.0.6 was never submitted, so 1.0.7 also carries its chime split.
+
+## Store status (November 1, 2026)
+
+| Store | Version | Status |
+| --- | --- | --- |
+| Firefox (AMO) | 1.0.7 | Live |
+| Chrome Web Store | 1.0.7 | Submitted; pending review |
 
 ## Changes and artifacts
 
@@ -16,8 +23,8 @@ Prepared locally; **not submitted, signed, or store-approved**. The existing Fir
 - `node tests/run.cjs` on Firefox 159.0: all 69 unit tests and all seven Firefox browser suites passed with the 1.0.7 manifest. The harness now loads the popup from browser chrome, because Firefox 159 refuses BiDi navigation to extension pages.
 - An XPI with the same runtime files passed the notification suite, including the delayed-failure and slow-Eagle dialog paths.
 - Mozilla Add-ons Linter 10.8.0 on that XPI: zero errors, zero notices, **one warning** for the inherited Android minimum-version/data-consent mismatch.
-- The owner tested test builds on live Instagram in Firefox and Chrome with Eagle closed on November 1, 2026 and reported the dialog working in both. This was not an agent-observed test, and it does not establish that Open Eagle launched the app or that the Chrome chime still plays.
-- Automated checks use local fixtures and mocked imports; no signing or store approval is claimed.
+- The owner tested test builds on live Instagram in Firefox and Chrome with Eagle closed on November 1, 2026 and reported the dialog, the Open Eagle launch and the Chrome chime working. This was not an agent-observed test.
+- Automated checks use local fixtures and mocked imports.
 
 ## Historical publication checks — 1.0.6
 

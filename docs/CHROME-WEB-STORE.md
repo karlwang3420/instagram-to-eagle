@@ -2,7 +2,7 @@
 
 Copy the text below into a **new item** in the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole). This is the first Chrome submission. Firefox keeps its separate AMO entry ([AMO-SUBMISSION.md](AMO-SUBMISSION.md)).
 
-**Status:** submitted for public review on October 4, 2026, as item `kcbhpiojkhdfflhoepkonoobinkdkhpo` (version 1.0.4), set to publish automatically once approved. Not yet approved. Once live, the listing will be at `https://chromewebstore.google.com/detail/kcbhpiojkhdfflhoepkonoobinkdkhpo`.
+**Status:** first submitted on October 4, 2026, as item `kcbhpiojkhdfflhoepkonoobinkdkhpo` (version 1.0.4). As of November 1, 2026, version 1.0.7 is submitted to the same item and pending review. The listing is at `https://chromewebstore.google.com/detail/kcbhpiojkhdfflhoepkonoobinkdkhpo`.
 
 ## Before you start
 
