@@ -2,7 +2,7 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
-## Unreleased
+## 1.0.8
 
 - Fixed saving video Stories after Instagram retired its legacy Story endpoints. Stories are now read from the data Instagram's Stories viewer has already loaded, with no extra requests.
 

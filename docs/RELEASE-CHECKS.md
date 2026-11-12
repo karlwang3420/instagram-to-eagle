@@ -1,6 +1,6 @@
-# Publication checks — 1.0.7
+# Publication checks — 1.0.8
 
-Version 1.0.6 was never submitted, so 1.0.7 also carries its chime split.
+Prepared locally; **not submitted, signed, or store-approved**.
 
 ## Store status (November 1, 2026)
 
@@ -8,6 +8,28 @@ Version 1.0.6 was never submitted, so 1.0.7 also carries its chime split.
 | --- | --- | --- |
 | Firefox (AMO) | 1.0.7 | Live |
 | Chrome Web Store | 1.0.7 | Submitted; pending review |
+
+## Changes and artifacts
+
+- Instagram retired the REST `reels_media`, `web_profile_info`, and `query_hash` Story endpoints, which broke video Story saves. Stories are now read from the Relay store that renders the Stories viewer, so Story saves make no Instagram requests. No permissions changed.
+- Story videos render through a global video portal; the active video is identified by its player's `videoFBID`, so the first video opened from the tray resolves.
+- An all-Stories save requires the newest loaded item to match the reel's `latest_reel_media`, since the store has no item count.
+- Firefox: `dist/instagram-to-eagle-1.0.8-unsigned.xpi`. Keep the existing ID `instagram-to-eagle@local.karl` and use **On this site** when submitting a new version.
+- AMO reviewer source: `dist/instagram-to-eagle-1.0.8-amo-source.zip`. The `-amo-submission.zip` is a convenience bundle, not an extension upload.
+- Chrome and full source: `dist/instagram-to-eagle-1.0.8-chrome.zip` and `dist/instagram-to-eagle-1.0.8-source.zip`.
+- All previous release packages are retained.
+
+## Validation evidence
+
+- `node tests/run.cjs` on Firefox 160.0: all 71 unit tests and all seven Firefox browser suites passed on the release source before the version bump, which changes only `manifest.json`.
+- The extracted 1.0.8 XPI passed the base (including Stories), notification, and public/settings suites. XPI and Chrome ZIP members match the committed source.
+- Mozilla Add-ons Linter 10.8.0 on the 1.0.8 XPI: zero errors, zero notices, **one warning** for the inherited Android minimum-version/data-consent mismatch.
+- On November 12, 2026, the agent ran this release's page-context Story extraction on live Instagram in Chrome: image and video Stories, username-only entry URLs, and all-Stories batches for five accounts, whose results passed through the Eagle payload code. The packaged extension was not loaded on live Instagram, and no real Eagle import was made.
+- Automated checks use local fixtures and mocked imports.
+
+## Historical publication checks — 1.0.7
+
+Version 1.0.6 was never submitted, so 1.0.7 also carries its chime split.
 
 ## Changes and artifacts
 
