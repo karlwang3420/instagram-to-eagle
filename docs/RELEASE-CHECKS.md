@@ -1,13 +1,11 @@
 # Publication checks — 1.0.8
 
-Prepared locally; **not submitted, signed, or store-approved**.
-
-## Store status (November 1, 2026)
+## Store status (November 12, 2026)
 
 | Store | Version | Status |
 | --- | --- | --- |
-| Firefox (AMO) | 1.0.7 | Live |
-| Chrome Web Store | 1.0.7 | Submitted; pending review |
+| Firefox (AMO) | 1.0.8 | Live |
+| Chrome Web Store | 1.0.7 | Live; 1.0.8 submitted, pending review |
 
 ## Changes and artifacts
 

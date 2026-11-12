@@ -96,7 +96,7 @@ Release note submitted with 1.0.5 (relative to the previously listed 1.0.0):
 
 Plays a short chime when a save is sent to Eagle. Removed an unused browser permission.
 
-1.0.5 was submitted for public review on October 4, 2026. Version 1.0.7 was live on AMO as of November 1, 2026.
+1.0.5 was submitted for public review on October 4, 2026. Version 1.0.8 was live on AMO as of November 12, 2026.
 
 Release note for 1.0.8:
 
