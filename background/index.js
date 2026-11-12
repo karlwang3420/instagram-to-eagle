@@ -37,7 +37,7 @@ async function selection(tabId, contextMenu = false) {
 }
 async function extract(tabId, context, network, mode) {
   if (context.isStory) {
-    const results = await browser.scripting.executeScript({ target: { tabId }, world: 'MAIN', func: extractInstagramStories, args: [context, network, mode === 'stories'] });
+    const results = await browser.scripting.executeScript({ target: { tabId }, world: 'MAIN', func: extractInstagramStories, args: [context, mode === 'stories'] });
     return EagleCore.normalizeStories(results[0]?.result || {items:[],complete:false}, context);
   }
   const results = await browser.scripting.executeScript({ target: { tabId }, world: "MAIN", func: extractInstagramPost, args: [context, network, mode] });

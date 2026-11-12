@@ -4,92 +4,89 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, '../../page/stories.js'), 'utf8');
-const owner = {pk:'42', username:'artist'};
-const image = pk => ({pk, media_type:1, image_versions2:{candidates:[{url:`https://s.cdninstagram.com/${pk}.jpg`}]}});
-const video = pk => ({pk, media_type:2, video_versions:[{url:`https://v.cdninstagram.com/${pk}.mp4`}]});
-const reel = {id:'42', user:owner, items:[image('101'), video('102'), video('103')]};
-function fixture({props={postId:'102'}, api, fetch, timers}={}) {
+// Normalized Relay records, shaped like Instagram's Stories V3 store.
+function store({username='artist', itemOwner=username, latest=1103}={}) {
+  const records = {
+    'XDTReelDict:42': {__id:'XDTReelDict:42', __typename:'XDTReelDict', id:'42', latest_reel_media:latest,
+      user:{__ref:'XDTUserDict:42'}, items:{__refs:['m101','m102','m103']}},
+    'XDTUserDict:42': {__id:'XDTUserDict:42', __typename:'XDTUserDict', username, full_name:'Artist'},
+    'XDTUserDict:7': {__id:'XDTUserDict:7', __typename:'XDTUserDict', username:itemOwner}
+  };
+  for (const [pk, type] of [['101',1],['102',2],['103',2]]) {
+    records[`m${pk}`] = {__id:`m${pk}`, __typename:'XDTMediaDict', pk, id:`${pk}_42`, media_type:type, taken_at:1000 + Number(pk),
+      user:{__ref:pk === '103' ? 'XDTUserDict:7' : 'XDTUserDict:42'}, image_versions2:{__ref:`i${pk}`},
+      video_versions:type === 2 ? {__refs:[`v${pk}`]} : null};
+    records[`i${pk}`] = {candidates:{__refs:[`c${pk}`]}};
+    records[`c${pk}`] = {url:`https://s.cdninstagram.com/${pk}.jpg`, width:640};
+    records[`v${pk}`] = {url:`https://v.cdninstagram.com/${pk}.mp4`, width:720};
+  }
+  return {getStore:() => ({getSource:() => ({getRecordIDs:() => Object.keys(records), get:key => records[key]})})};
+}
+function fixture({props={postId:'102'}, environment=store(), current={type:'video'}}={}) {
   class Node {}
   const active = new Node(); active.src = 'blob:https://www.instagram.com/clicked';
-  active.__reactFiber$test = {memoizedProps:props};
-  const root = new Node(); root.querySelector = () => active; root.querySelectorAll = () => [active];
-  const calls = [], rawCalls = [];
-  const world = {require(name) {
-    assert.equal(name,'PolarisInstapi');
-    return {async apiGet(route, options) {
-      calls.push({route, options});
-      if (api) return api(route, options, active);
-      return {data:route.includes('reels_tray') ? {tray:[{user:owner}]} : {reels:{42:reel}, reels_media:[reel]}};
-    }};
-  }};
-  const sandbox = vm.createContext({Node, window:world, location:{hostname:'www.instagram.com'},
-    document:{querySelector:()=>root,querySelectorAll:()=>[]}, URL, AbortSignal,
-    setTimeout:timers?.setTimeout || setTimeout, clearTimeout:timers?.clearTimeout || clearTimeout,
-    fetch:async (route,opts) => {rawCalls.push(route); return fetch ? fetch(route,opts) : new Response('{}',{headers:{'content-type':'application/json'}});}});
-  vm.runInContext(source,sandbox);
-  const context = {marker:'12345678-1234-1234-1234-123456789abc',author:'artist',storyId:'',elementURL:active.src,current:{type:'video'}};
-  return {context, active, root, calls, rawCalls,
-    run:async (network=true,all=false) => JSON.parse(JSON.stringify(await sandbox.extractInstagramStories(context,network,all)))};
+  active.__reactFiber$test = {memoizedProps:props, return:{memoizedProps:{value:{environment}}}};
+  const root = new Node(); root.querySelector = () => active;
+  const sandbox = vm.createContext({Node, location:{hostname:'www.instagram.com'}, document:{querySelector:()=>root}, URL});
+  vm.runInContext(source, sandbox);
+  const context = {marker:'12345678-1234-1234-1234-123456789abc', author:'artist', storyId:'', elementURL:active.src, current};
+  return {context, active, run:(all=false) => JSON.parse(JSON.stringify(sandbox.extractInstagramStories(context, all)))};
 }
-test('page client resolves ID-only blob player to second Story, with no raw fetch', async()=>{
-  const f=fixture(), result=await f.run();
-  assert.equal(result.currentStoryId,'102');
-  assert.equal(result.items[0].video_versions[0].url,'https://v.cdninstagram.com/102.mp4');
-  assert.equal(result.items.length,1); assert.equal(f.rawCalls.length,0);
-  assert.deepEqual(f.calls.map(c=>c.route),['/api/v1/feed/reels_tray/','/api/v1/feed/reels_media/']);
-  assert.deepEqual(JSON.parse(JSON.stringify(f.calls[1].options)),{query:{reel_ids:'42'}});
+test('ID-only blob player resolves to second Story from the page store', ()=>{
+  const result = fixture().run();
+  assert.equal(result.currentStoryId, '102');
+  assert.equal(result.items[0].video_versions[0].url, 'https://v.cdninstagram.com/102.mp4');
+  assert.equal(result.items.length, 1); assert.equal(result.user.full_name, 'Artist');
 });
-test('nearest compound media fiber key resolves without full media props', async()=>{
-  const f=fixture({props:{}}); f.active.__reactFiber$test.return={key:'103_42',memoizedProps:{}};
-  assert.equal((await f.run()).currentStoryId,'103');
+test('Relay record reference on the player identifies the Story', ()=>{
+  assert.equal(fixture({props:{media:{__id:'m101', __fragments:{}}}}).run().currentStoryId, '101');
 });
-test('preview and DOM-only extraction never call page or network clients', async()=>{
-  const f=fixture(); await f.run(false);
-  assert.equal(f.calls.length,0); assert.equal(f.rawCalls.length,0);
+test('portal video player metadata identifies the Story video', ()=>{
+  const result = fixture({props:{coreVideoPlayerMetaData:{videoFBID:'103', subOrigin:'inline'}}}).run();
+  assert.equal(result.currentStoryId, '103'); assert.equal(result.items[0].video_versions[0].url, 'https://v.cdninstagram.com/103.mp4');
 });
-test('batch verifies account and includes all items rather than only active item', async()=>{
-  const f=fixture(), result=await f.run(true,true);
-  assert.equal(result.complete,true); assert.deepEqual(result.items.map(i=>i.pk),['101','102','103']);
+test('nearest compound media fiber key resolves without media props', ()=>{
+  const f = fixture({props:{}}); f.active.__reactFiber$test = {key:'102_42', memoizedProps:{}, return:f.active.__reactFiber$test.return};
+  assert.equal(f.run().currentStoryId, '102');
 });
-test('no active identity never becomes first Story; batch remains allowed', async()=>{
-  const f=fixture({props:{}}), result=await f.run();
-  assert.equal(result.currentStoryId,''); assert.equal(result.items.length,0);
-  assert.equal((await f.run(true,true)).items.length,3);
+test('Story ID in the URL selects that item', ()=>{
+  const f = fixture({props:{}}); f.context.storyId = '101';
+  assert.equal(f.run().items[0].image_versions2.candidates[0].url, 'https://s.cdninstagram.com/101.jpg');
 });
-test('conflicting player IDs are rejected, even if one matches returned media', async()=>{
-  const f=fixture({props:{postId:'102',mediaId:'103'}});
-  assert.equal((await f.run()).items.length,0);
+test('visible photo URL identifies the Story without player IDs', ()=>{
+  const f = fixture({props:{}, current:{type:'image', url:'https://s.cdninstagram.com/101.jpg?stp=x'}});
+  assert.equal(f.run().currentStoryId, '101');
 });
-test('reel collection props do not imply first or last child is active', async()=>{
-  const f=fixture({props:{reel}});
-  assert.equal((await f.run()).items.length,0);
+test('batch includes all items rather than only the active item', ()=>{
+  const result = fixture().run(true);
+  assert.equal(result.complete, true); assert.deepEqual(result.items.map(i=>i.pk), ['101','102','103']);
 });
-test('wrong-account response is rejected even with matching media ID', async()=>{
-  const f=fixture({api:async route=>({data:route.includes('reels_tray') ? {tray:[{user:owner}]} : {reels:{42:{...reel,user:{pk:'42',username:'other'}}}}})});
-  assert.equal((await f.run()).items.length,0);
+test('batch missing the reel\'s newest Story is incomplete; single save still works', ()=>{
+  const f = fixture({environment:store({latest:1104})});
+  assert.equal(f.run(true).complete, false); assert.equal(f.run().currentStoryId, '102');
 });
-test('incomplete account lists cannot be batch imported', async()=>{
-  const f=fixture({api:async route=>({data:route.includes('reels_tray') ? {tray:[{user:owner}]} : {reels:{42:{...reel,has_more:true}}}})});
-  assert.equal((await f.run(true,true)).complete,false);
+test('no active identity never becomes first Story; batch remains allowed', ()=>{
+  const f = fixture({props:{}});
+  assert.equal(f.run().items.length, 0); assert.equal(f.run(true).items.length, 3);
 });
-test('page module failure falls back to read-only reels_media request', async()=>{
-  const f=fixture({api:async()=>{throw Error('Unavailable')},fetch:async route=>new Response(JSON.stringify(route.includes('web_profile_info')?{data:{user:owner}}:{reels:{42:reel}}),{headers:{'content-type':'application/json'}})});
-  assert.equal((await f.run()).currentStoryId,'102');
-  assert.ok(f.rawCalls.includes('/api/v1/feed/reels_media/?reel_ids=42'));
+test('conflicting player IDs are rejected', ()=>{
+  assert.equal(fixture({props:{postId:'102', mediaId:'101'}}).run().items.length, 0);
 });
-test('hung page client times out and does not prevent fallback', async()=>{
-  const f=fixture({api:()=>new Promise(()=>{}), timers:{setTimeout:fn=>setTimeout(fn,0),clearTimeout},
-    fetch:async route=>new Response(JSON.stringify(route.includes('web_profile_info')?{data:{user:owner}}:{reels_media:[reel]}),{headers:{'content-type':'application/json'}})});
-  assert.equal((await f.run()).currentStoryId,'102');
+test('reel collection props do not imply first or last child is active', ()=>{
+  assert.equal(fixture({props:{reel:{__id:'XDTReelDict:42'}}}).run().items.length, 0);
 });
-test('autoplay during API lookup preserves captured click identity', async()=>{
-  const f=fixture({api:async(route,options,active)=>{
-    active.src='blob:https://www.instagram.com/advanced'; active.__reactFiber$test.memoizedProps={postId:'103'};
-    return {data:route.includes('reels_tray')?{tray:[{user:owner}]}:{reels_media:[reel]}};
-  }});
-  assert.equal((await f.run()).currentStoryId,'102');
+test('another account\'s reel is never used', ()=>{
+  const result = fixture({environment:store({username:'other'})}).run();
+  assert.equal(result.items.length, 0); assert.match(result.note, /not loaded/);
 });
-test('autoplay before extraction rejects stale element identity', async()=>{
-  const f=fixture(); f.active.src='blob:https://www.instagram.com/advanced';
-  await assert.rejects(f.run(), /Story advanced/); assert.equal(f.calls.length,0);
+test('a reel containing another owner\'s item is rejected', ()=>{
+  assert.equal(fixture({environment:store({itemOwner:'other'})}).run(true).complete, false);
+});
+test('missing page store reports why nothing was found', ()=>{
+  const result = fixture({environment:null}).run();
+  assert.equal(result.items.length, 0); assert.match(result.note, /not found/);
+});
+test('autoplay before extraction rejects stale element identity', ()=>{
+  const f = fixture(); f.active.src = 'blob:https://www.instagram.com/advanced';
+  assert.throws(() => f.run(), /Story advanced/);
 });

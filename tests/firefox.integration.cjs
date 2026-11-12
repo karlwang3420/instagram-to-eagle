@@ -75,8 +75,6 @@ async function clickControl(context, kind = 'media', code = 'B') {
         const parsedURL = new URL(url);
         const api = url.includes('/api/v1/media/');
         const cdn = parsedURL.hostname !== 'www.instagram.com';
-        const storyAPI = url.includes('/graphql/query/');
-        const storyFeedAPI = /\/api\/v1\/feed\/user\/\d+\/story\//.test(url);
         const profileAPI = url.includes('/api/v1/users/web_profile_info/');
         if(profileNetwork.pages.length&&(profileAPI||/\/api\/v1\/feed\/user\/[^/]+\/username\//.test(url))){
           profileNetwork.requests.push(data.params.request);
@@ -84,8 +82,8 @@ async function clickControl(context, kind = 'media', code = 'B') {
           send('network.provideResponse',{request:data.params.request.request,statusCode:profileNetwork.status,headers:[{name:'Content-Type',value:{type:'string',value:'application/json'}}],body:{type:'base64',value:Buffer.from(JSON.stringify(body)).toString('base64')}}).catch(e=>console.error(e.message));
           return;
         }
-        const body = cdn ? '<svg xmlns="http://www.w3.org/2000/svg" width="460" height="300"><rect width="460" height="300" fill="#789"/></svg>' : storyFeedAPI ? JSON.stringify({reel:storyFeedReel}) : storyAPI ? JSON.stringify({data:{reels_media:storyNetworkReels}}) : profileAPI ? JSON.stringify({data:{user:{id:'42',username:'artist'}}}) : api ? JSON.stringify({ items: [fixturePost] }) : fixture;
-        send('network.provideResponse', { request: data.params.request.request, statusCode: storyAPI && failStoryGraphQL ? 403 : 200, headers: [{ name: 'Content-Type', value: { type: 'string', value: cdn ? 'image/svg+xml' : api || storyAPI || storyFeedAPI || profileAPI ? 'application/json' : 'text/html' } }], body: { type: 'base64', value: Buffer.from(body).toString('base64') } }).catch(e => console.error(e.message));
+        const body = cdn ? '<svg xmlns="http://www.w3.org/2000/svg" width="460" height="300"><rect width="460" height="300" fill="#789"/></svg>' : profileAPI ? JSON.stringify({data:{user:{id:'42',username:'artist'}}}) : api ? JSON.stringify({ items: [fixturePost] }) : fixture;
+        send('network.provideResponse', { request: data.params.request.request, statusCode: 200, headers: [{ name: 'Content-Type', value: { type: 'string', value: cdn ? 'image/svg+xml' : api || profileAPI ? 'application/json' : 'text/html' } }], body: { type: 'base64', value: Buffer.from(body).toString('base64') } }).catch(e => console.error(e.message));
       }
     };
     const session = await send('session.new', { capabilities: { alwaysMatch: { acceptInsecureCerts: true } } });
@@ -363,9 +361,9 @@ async function clickControl(context, kind = 'media', code = 'B') {
     await evaluate(popup,`browser.extension.getViews({type:'popup'})[0].close();true`);
     await send('browsingContext.activate',{context:ig});
     const storyOwner = {pk:'42',username:'artist'};
-    const storyItems = [{...img('101'),caption:{text:'Story image #art'}},{pk:'102',media_type:2,video_versions:[{url:'https://v.cdninstagram.com/story.mp4',width:1080,height:1920}]}];
-    const storyReel = {id:'42',user:storyOwner,media_count:2,items:storyItems};
-    await evaluate(ig,`history.pushState({},'','/stories/artist/102/');document.querySelector('main').style.cssText='width:100%;display:flex;align-items:center;justify-content:center;gap:20px';document.querySelector('main').innerHTML='<div id="story-neighbor" style="width:500px;height:580px;background:#777"><a href="/other/">other</a><img width="500" height="520" src="https://s.cdninstagram.com/wrong.jpg"></div><div id="story-viewer" style="position:relative;width:460px;height:620px;background:#53606a;flex:none"><header style="display:flex;align-items:center;padding:12px;justify-content:space-between"><a href="/artist/">artist</a><div id="playback-row" style="display:flex;align-items:center;gap:8px"><button aria-label="Mute" style="width:32px;height:32px">Mute</button><button aria-label="Pause" style="width:32px;height:32px">Ⅱ</button></div></header><div style="position:absolute;top:220px"><video width="460" height="180" src="blob:https://www.instagram.com/story"></video></div><span style="position:absolute;bottom:70px">Story caption</span></div>';document.querySelector('#story-viewer').__reactProps$story={reel:${JSON.stringify(storyReel)},neighbor:{id:'99',user:{username:'other'},items:[{pk:'999'}]}};document.getElementById('instagram-eagle-status')?.remove();window.scrollTo(0,0);true`);
+    const storyItems = [{...img('101'),taken_at:101,caption:{text:'Story image #art'}},{pk:'102',media_type:2,taken_at:102,video_versions:[{url:'https://v.cdninstagram.com/story.mp4',width:1080,height:1920}]}];
+    const storyReel = {id:'42',user:storyOwner,latest_reel_media:102,items:storyItems};
+    await evaluate(ig,`history.pushState({},'','/stories/artist/102/');document.querySelector('main').style.cssText='width:100%;display:flex;align-items:center;justify-content:center;gap:20px';document.querySelector('main').innerHTML='<div id="story-neighbor" style="width:500px;height:580px;background:#777"><a href="/other/">other</a><img width="500" height="520" src="https://s.cdninstagram.com/wrong.jpg"></div><div id="story-viewer" style="position:relative;width:460px;height:620px;background:#53606a;flex:none"><header style="display:flex;align-items:center;padding:12px;justify-content:space-between"><a href="/artist/">artist</a><div id="playback-row" style="display:flex;align-items:center;gap:8px"><button aria-label="Mute" style="width:32px;height:32px">Mute</button><button aria-label="Pause" style="width:32px;height:32px">Ⅱ</button></div></header><div style="position:absolute;top:220px"><video width="460" height="180" src="blob:https://www.instagram.com/story"></video></div><span style="position:absolute;bottom:70px">Story caption</span></div>';${storyStoreHelpers}setStory([${JSON.stringify(storyReel)},{id:'99',user:{username:'other'},items:[{pk:'999',media_type:1}]}]);document.getElementById('instagram-eagle-status')?.remove();window.scrollTo(0,0);true`);
     // On first entry the player/header can hydrate after the URL and DOM exist.
     // No slide navigation, clicks, or child replacements should be needed.
     await evaluate(ig,`document.getElementById('story-viewer').style.opacity='0';document.querySelectorAll('#playback-row button').forEach(b=>b.removeAttribute('aria-label'));true`);
@@ -421,25 +419,12 @@ async function clickControl(context, kind = 'media', code = 'B') {
     assert.equal(stories?.items?.length,2);assert.equal(stories.items[0].website,'https://www.instagram.com/stories/artist/101/');
     assert.deepEqual(stories.items[0].tags,['Instagram','Story','@artist','art']);assert.ok(stories.items.every(item=>item.annotation===''));
     console.log('PASS letterboxed Story targets account header instead of larger neighboring media; controls are native row children through resize/re-render');
-    await evaluate(ig,`delete document.getElementById('story-viewer').__reactProps$story;true`);
-    await evaluate(ig,`document.getElementById('story-viewer').__reactFiber$story={memoizedProps:{},memoizedState:{data:{id:'102',is_video:true,video_resources:[{src:'https://v.cdninstagram.com/state-story.mp4',config_width:1080,config_height:1920}]}}};true`);
-    const stateStory=await clickStory('media');assert.equal(stateStory?.items?.[0]?.url,'https://v.cdninstagram.com/state-story.mp4');
-    await evaluate(ig,`delete document.getElementById('story-viewer').__reactFiber$story;true`);
-    console.log('PASS GraphQL video_resources in React state resolves the selected Story video');
-    storyNetworkReels=[{...storyReel,user:undefined,owner:storyOwner}];
-    const networkStories = await clickStory('all');
-    assert.equal(networkStories?.items?.length,2);
-    console.log('PASS Stories same-origin profile/GraphQL fallback resolves the selected account only');
-    storyFeedReel=storyReel;failStoryGraphQL=true;
-    const feedStory=await clickStory('media');
-    assert.equal(feedStory?.items?.[0]?.url,'https://v.cdninstagram.com/story.mp4');
-    console.log('PASS account story endpoint resolves selected video when legacy GraphQL is unavailable');
-    storyFeedReel=null;failStoryGraphQL=false;
-    storyNetworkReels=[{id:'99',owner:{id:'99',username:'other'},items:storyItems}];
+    await evaluate(ig,`setStory([{id:'99',user:{username:'other'},items:${JSON.stringify(storyItems)}}]);true`);
     const rejectedStories = await clickStory('all', 'verify all stories');assert.equal(rejectedStories,null);
     assert.match(await evaluate(ig,`document.getElementById('instagram-eagle-status').textContent`),/verify all stories/);
     console.log('PASS unrelated account data is rejected without sending a partial Stories batch');
-    await evaluate(ig,`history.pushState({},'','/stories/artist/101/');document.querySelector('#story-viewer video').outerHTML='<img width="460" height="520" src="https://s.cdninstagram.com/101.jpg">';true`);
+    await evaluate(ig,`setStory([${JSON.stringify(storyReel)}]);true`);
+    await evaluate(ig,`history.pushState({},'','/stories/artist/101/');document.querySelector('#story-viewer video').outerHTML='<img width="460" height="520" src="https://s.cdninstagram.com/101.jpg">';setStory([${JSON.stringify(storyReel)}]);true`);
     await delay(700);
     const storyImage=JSON.parse(await evaluate(popup,`(async()=>{const p=await bg.preview(igTab.id);await bg.route({type:'save',token:p.token,mode:'story'});return JSON.stringify(bg.testPayload)})()`));
     assert.equal(storyImage.items[0].url,'https://s.cdninstagram.com/101.jpg');
@@ -447,9 +432,9 @@ async function clickControl(context, kind = 'media', code = 'B') {
     assert.equal(await evaluate(ig,`document.querySelectorAll('[data-eagle-post="102"]').length`),0);
     console.log('PASS story navigation refreshes controls and current image has a safe DOM fallback');
     // Exact first-entry URL shape reported by the user: no numeric Story ID.
-    const entryItems=[img('201'),img('202'),{pk:'303',media_type:2,video_versions:[{url:'https://v.cdninstagram.com/entry-story.mp4'}]}];
-    const entryReel={id:'42',user:{pk:'42',username:'hori_hayung'},media_count:3,items:entryItems};
-    await evaluate(ig,`history.pushState({},'','/stories/hori_hayung/');document.querySelector('#story-viewer header a').href='/hori_hayung/';document.querySelector('#story-viewer header a').textContent='hori_hayung';document.querySelector('#story-viewer img').src='https://s.cdninstagram.com/202.jpg';document.getElementById('story-viewer').__reactProps$entry={reel:${JSON.stringify(entryReel)}};true`);
+    const entryItems=[{...img('201'),taken_at:201},{...img('202'),taken_at:202},{pk:'303',media_type:2,taken_at:303,video_versions:[{url:'https://v.cdninstagram.com/entry-story.mp4'}]}];
+    const entryReel={id:'42',user:{pk:'42',username:'hori_hayung'},latest_reel_media:303,items:entryItems};
+    await evaluate(ig,`history.pushState({},'','/stories/hori_hayung/');document.querySelector('#story-viewer header a').href='/hori_hayung/';document.querySelector('#story-viewer header a').textContent='hori_hayung';document.querySelector('#story-viewer img').src='https://s.cdninstagram.com/202.jpg';setStory([${JSON.stringify(entryReel)}]);true`);
     await delay(900);
     assert.equal(await evaluate(ig,`document.querySelectorAll('#playback-row [data-eagle-post="story-hori_hayung"]').length`),2);
     async function clickEntry(kind, expectedError = null) {
@@ -469,7 +454,7 @@ async function clickControl(context, kind = 'media', code = 'B') {
     assert.deepEqual(entryAll.items.map(item=>item.website),['201','202','303'].map(id=>`https://www.instagram.com/stories/hori_hayung/${id}/`));
     assert.equal(await evaluate(ig,'location.pathname'),'/stories/hori_hayung/');
     console.log('PASS username-only entry URL mounts both buttons and saves the visible second image or complete account batch without changing the URL');
-    await evaluate(ig,`document.querySelector('#story-viewer img').outerHTML='<video width="460" height="180" src="blob:https://www.instagram.com/entry"></video>';document.querySelector('#story-viewer video').__reactProps$active={storyItem:${JSON.stringify(entryItems[2])}};true`);
+    await evaluate(ig,`document.querySelector('#story-viewer img').outerHTML='<video width="460" height="180" src="blob:https://www.instagram.com/entry"></video>';setStory([${JSON.stringify(entryReel)}],{storyItem:${JSON.stringify(entryItems[2])}});true`);
     await delay(700);
     const entryVideo=await clickEntry('media');
     assert.equal(entryVideo?.items?.[0]?.url,'https://v.cdninstagram.com/entry-story.mp4');
@@ -477,47 +462,16 @@ async function clickControl(context, kind = 'media', code = 'B') {
     const entryPreview=JSON.parse(await evaluate(popup,`(async()=>JSON.stringify(await bg.preview(igTab.id)))()`));
     assert.equal(entryPreview.url,'https://www.instagram.com/stories/hori_hayung/303/');
     console.log('PASS username-only blob-video Story resolves its ID from the selected media element; popup preserves the resolved source');
-    await evaluate(ig,`delete document.querySelector('#story-viewer video').__reactProps$active;true`);
+    await evaluate(ig,`setStory([${JSON.stringify(entryReel)}]);true`);
     const ambiguous=await clickEntry('media', 'Could not resolve');assert.equal(ambiguous,null);
     assert.match(await evaluate(ig,`document.getElementById('instagram-eagle-status').textContent`),/Could not resolve/);
     console.log('PASS ambiguous username-only blob player is rejected instead of choosing the first Story');
-    // Real Firefox MAIN-world bridge, but the site's private request client is
-    // mocked. No Instagram account mutation and no test imports into Eagle.
-    await evaluate(ig,`delete document.getElementById('story-viewer').__reactProps$entry;
-      document.querySelector('#story-viewer video').__reactFiber$player={memoizedProps:{postId:'303'}};
-      window.storyPageCalls=[];
-      window.storyAPIReel=${JSON.stringify(entryReel)};
-      window.require=name=>{if(name!=='PolarisInstapi')throw new Error('Unexpected module');return {apiGet:async(route,options)=>{
-        storyPageCalls.push({route,options});
-        if(route==='/api/v1/feed/reels_tray/')return {data:{tray:[{user:{pk:'99',username:'other'}},{user:storyAPIReel.user}]}};
-        if(route==='/api/v1/feed/reels_media/')return {data:{reels:{42:storyAPIReel},reels_media:[storyAPIReel]}};
-        throw new Error('Unexpected endpoint');
-      }}};true`);
-    const apiVideo=await clickEntry('media');
-    assert.equal(apiVideo?.items?.[0]?.url,'https://v.cdninstagram.com/entry-story.mp4');
-    assert.equal(apiVideo.items[0].website,'https://www.instagram.com/stories/hori_hayung/303/');
-    assert.deepEqual(JSON.parse(await evaluate(ig,'JSON.stringify(storyPageCalls.map(c=>c.route))')),['/api/v1/feed/reels_tray/','/api/v1/feed/reels_media/']);
-    assert.ok(apiVideo.items.every(item=>item.annotation===''));
-    console.log('PASS page-side API resolves ID-only blob player to correct third Story via trusted native-row click');
-    const apiAll=await clickEntry('all');
-    assert.equal(apiAll?.items?.length,3);
-    assert.deepEqual(apiAll.items.map(item=>item.website),['201','202','303'].map(id=>`https://www.instagram.com/stories/hori_hayung/${id}/`));
-    console.log('PASS page-side account batch retains each Story source URL and includes video');
-    await evaluate(ig,`document.querySelector('#story-viewer video').__reactFiber$player={memoizedProps:{}};true`);
-    const apiAmbiguous=await clickEntry('media', 'Could not resolve');assert.equal(apiAmbiguous,null);
-    console.log('PASS API list alone cannot cause current-Story action to import the first item');
-    await evaluate(ig,`document.querySelector('#story-viewer video').__reactFiber$player={memoizedProps:{postId:'303'}};
-      const stableRequire=window.require;
-      window.require=name=>{const api=stableRequire(name);return {apiGet:async(...args)=>{
-        const result=await api.apiGet(...args);
-        document.querySelector('#story-viewer video').src='blob:https://www.instagram.com/next-story';
-        document.querySelector('#story-viewer video').__reactFiber$player.memoizedProps={postId:'201'};
-        return result;
-      }}};true`);
-    const apiAdvanced=await clickEntry('media');
-    assert.equal(apiAdvanced?.items?.[0]?.url,'https://v.cdninstagram.com/entry-story.mp4');
-    assert.equal(apiAdvanced.items[0].website,'https://www.instagram.com/stories/hori_hayung/303/');
-    console.log('PASS autoplay during Story API response does not retarget the pending import');
+    await evaluate(ig,`setStory([${JSON.stringify(entryReel)}],{media:{__id:'XDTMediaDict:303',__fragments:{}}});true`);
+    const relayVideo=await clickEntry('media');
+    assert.equal(relayVideo?.items?.[0]?.url,'https://v.cdninstagram.com/entry-story.mp4');
+    assert.equal(relayVideo.items[0].website,'https://www.instagram.com/stories/hori_hayung/303/');
+    assert.ok(relayVideo.items.every(item=>item.annotation===''));
+    console.log('PASS Relay media reference on the blob player resolves the correct third Story via trusted native-row click');
     await require('./browser/carousel-browser.cjs')({evaluate,send,waitFor,ig,popup,delay,screenshot:async name=>{
       const shot=await send('browsingContext.captureScreenshot',{context:ig,origin:'viewport'});
       fs.writeFileSync(path.join(work,name),Buffer.from(shot.data,'base64'));
@@ -544,5 +498,13 @@ const fixture = options.inline ? fixtureHTML.replaceAll('<article','<div').repla
 const img = id => ({pk:id,media_type:1,image_versions2:{candidates:[{url:`https://s.cdninstagram.com/${id}.jpg`,width:1080,height:1350}]}});
 let fixturePost = { pk:'1',code:'B',media_type:8,carousel_media_count:3,user:{username:'artist'},caption:{text:'Full caption #illustration #設計'},carousel_media:[img('a'),{media_type:2,video_versions:[{url:'https://v.cdninstagram.com/video.mp4'}]},img('b')] };
 const reelPost = {pk:'1',code:'B',media_type:2,product_type:'clips',user:{username:'artist'},caption:{text:'Reel caption'},has_audio:true,video_versions:[{url:'https://v.cdninstagram.com/reel.mp4',width:1080,height:1920}],clips_metadata:{music_info:{music_asset_info:{title:'Track',display_artist:'Musician'}}}};
-let storyNetworkReels = [];
-let storyFeedReel = null, failStoryGraphQL = false;
+// Normalizes reels into Relay-style records reachable from the Story viewer's
+// fiber chain, like Instagram's Stories V3 store. The player gets `props`.
+const storyStoreHelpers = `window.setStory=(reels,props={})=>{const records={};let n=0;
+const link=(value,key)=>{key=key||(value.pk&&value.media_type?'XDTMediaDict:'+value.pk:'client:'+n++);const record={__id:key};
+for(const [k,v] of Object.entries(value))record[k]=Array.isArray(v)&&v.some(x=>x&&typeof x==='object')?{__refs:v.map(x=>link(x).__ref)}:v&&typeof v==='object'?link(v):v;
+records[key]=record;return {__ref:key};};
+for(const reel of reels)link({__typename:'XDTReelDict',...reel},'XDTReelDict:'+reel.id);
+const viewer=document.getElementById('story-viewer');
+viewer.__reactFiber$relay={memoizedProps:{value:{environment:{getStore:()=>({getSource:()=>({getRecordIDs:()=>Object.keys(records),get:key=>records[key]})})}}}};
+const media=viewer.querySelector('video,img');if(media)media.__reactFiber$player={memoizedProps:props,return:viewer.__reactFiber$relay};};`;

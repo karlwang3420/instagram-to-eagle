@@ -84,8 +84,8 @@ The manifest defines script dependency order. Recovery injection reads that same
 
 Control detection owns the distinction between linked tiles and posts with native action rows. Renderers consume that decision; they do not call each other to determine ownership. Native labels and icon shapes are evidence only within the same post boundary. Hidden controls are rejected, while controls below the viewport remain valid owners.
 
-Media lookup uses Instagram's page data and on-demand same-origin requests. Story lookup can use the page-side `PolarisInstapi.apiGet` client, with fallback endpoints when unavailable. These undocumented interfaces can change.
+Post lookup uses Instagram's page data and on-demand same-origin requests. Story lookup makes no requests: it reads the account's reel (`XDTReelDict`) from the Relay store that renders the Stories viewer, found through the player's React fiber chain. The store has no item count, so an all-Stories save requires the newest item to match the reel's `latest_reel_media`. Instagram retired the REST `reels_media`, `web_profile_info`, and `query_hash` Story endpoints in November 2026. These undocumented interfaces can change.
 
-The full-post and player-identity approaches were implemented independently after inspecting Turbo Downloader behavior; no Turbo code or assets are bundled. Legacy Story fallbacks reference the [Instagrapi implementation](https://github.com/subzeroid/instagrapi/blob/master/instagrapi/mixins/story.py).
+The full-post and player-identity approaches were implemented independently after inspecting Turbo Downloader behavior; no Turbo code or assets are bundled.
 
 API references: [Eagle imports](https://api.eagle.cool/item/add-from-urls) · [Firefox script injection](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/scripting/executeScript).

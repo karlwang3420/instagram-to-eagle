@@ -2,6 +2,10 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
+## Unreleased
+
+- Fixed saving video Stories after Instagram retired its legacy Story endpoints. Stories are now read from the data Instagram's Stories viewer has already loaded, with no extra requests.
+
 ## 1.0.7
 
 - Clicking download while Eagle is closed now shows a centered dialog in the upper part of the window, with an Open Eagle button that launches the desktop app. Other notices stay at the bottom right.
