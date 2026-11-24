@@ -82,15 +82,9 @@
     dialog.addEventListener('click', event => event.stopPropagation());
     later.addEventListener('click', dismiss);
     open.addEventListener('click', () => {
-      setTimeout(() => {
-        if (dismissToast !== dismiss) return;
-        title.textContent = 'Opening Eagle…';
-        box.textContent = 'If your browser asks, allow it. Click download again once Eagle has loaded.';
-        open.remove();
-        later.textContent = 'Dismiss';
-        later.focus({ preventScroll: true });
-        timer = setTimeout(dismiss, 10000);
-      });
+      // Dismiss after the link's default navigation to eagle://open runs.
+      clearTimeout(timer);
+      timer = setTimeout(dismiss);
     });
     window.addEventListener('keydown', onKey, true);
     dismissToast = dismiss;

@@ -64,22 +64,20 @@ module.exports = async ({evaluate,send,waitFor,ig,popup,delay,screenshot}) => {
 
   await showOffline(); r = await rect();
   await pointer(r.x+r.width-60,r.y+r.height-32,true); await delay(300);
-  r = await rect(); assert.match(r.text,/^If your browser asks/);
-  await pointer(10,10); await screenshot('toast-eagle-opening-firefox.png');
-  await delay(10000); assert.equal(await exists(),false);
-  console.log('PASS Open Eagle explains the next step, then dismisses itself');
+  assert.equal(await exists(),false);
+  console.log('PASS Open Eagle dismisses the dialog');
 
   // A connection that takes 1.5 seconds to fail, as Firefox sees on Windows.
   await evaluate(popup,`bg.fetch=()=>new Promise((_,reject)=>setTimeout(()=>reject(new TypeError('connection refused')),1500));true`);
   await pointer(control.x,control.y,true); await delay(250);
   assert.equal(await exists(),false,'no prompt before the early threshold');
-  await delay(500); r = await rect(); assert.match(r.text,/^Open Eagle to save this/);
+  await waitFor(ig,`!!document.getElementById('instagram-eagle-status')`,1000);
+  r = await rect(); assert.match(r.text,/^Open Eagle to save this/);
   await pointer(r.x+r.width-60,r.y+r.height-32,true); await delay(200);
-  assert.match((await rect()).text,/^If your browser asks/);
+  assert.equal(await exists(),false);
   await pointer(10,10); await delay(1200);
-  assert.match((await rect()).text,/^If your browser asks/,'the late failure must not reopen the prompt');
-  await key(''); assert.equal(await exists(),false);
-  console.log('PASS slow failure prompts after 500ms and the late failure keeps the Open Eagle state');
+  assert.equal(await exists(),false,'the late failure must not reopen the prompt');
+  console.log('PASS slow failure prompts after 500ms and the late failure does not reopen the dismissed dialog');
 
   // A busy Eagle answers late: the prompt clears itself and the save still completes.
   await evaluate(popup,`bg.testPayload=null;bg.fetch=(url,opts)=>new Promise(resolve=>setTimeout(()=>resolve(window.reachableFetch(url,opts)),1200));true`);
