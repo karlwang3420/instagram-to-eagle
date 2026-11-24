@@ -2,6 +2,10 @@
 
 Release notes are listed newest first. Older entries describe behavior at that version; some features were later removed.
 
+## 1.0.9
+
+- Clicking **Open Eagle** in the closed-Eagle dialog now dismisses the dialog immediately instead of showing the follow-up "Opening Eagle…" message.
+
 ## 1.0.8
 
 - Fixed saving video Stories after Instagram retired its legacy Story endpoints. Stories are now read from the data Instagram's Stories viewer has already loaded, with no extra requests.

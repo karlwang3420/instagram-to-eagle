@@ -1,4 +1,28 @@
-# Publication checks — 1.0.8
+# Publication checks — 1.0.9
+
+## Store status (November 23, 2026)
+
+| Store | Version | Status |
+| --- | --- | --- |
+| Firefox (AMO) | 1.0.9 | Live |
+| Chrome Web Store | 1.0.9 | Submitted; pending review |
+
+## Changes and artifacts
+
+- Clicking **Open Eagle** in the closed-Eagle dialog now dismisses the dialog immediately instead of switching to the follow-up "Opening Eagle…" prompt. No permissions changed.
+- Firefox: `dist/instagram-to-eagle-1.0.9-unsigned.xpi`. Keep the existing ID `instagram-to-eagle@local.karl` and use **On this site** when submitting a new version.
+- AMO reviewer source: `dist/instagram-to-eagle-1.0.9-amo-source.zip`. The `-amo-submission.zip` is a convenience bundle, not an extension upload.
+- Chrome and full source: `dist/instagram-to-eagle-1.0.9-chrome.zip` and `dist/instagram-to-eagle-1.0.9-source.zip`.
+- All previous release packages are retained.
+
+## Validation evidence
+
+- `node --test tests/unit/*.test.cjs`: all 71 unit tests passed with the 1.0.9 manifest.
+- `node tests/firefox.integration.cjs dist/instagram-to-eagle-1.0.9-unsigned.xpi --toast-only` on Firefox 160.0.1: all notification checks passed against the packaged XPI, including immediate dismissal on clicking Open Eagle and late connection failures not reopening the dismissed dialog.
+- Archive integrity checks passed for both `dist/instagram-to-eagle-1.0.9-unsigned.xpi` (22 files) and `dist/instagram-to-eagle-1.0.9-chrome.zip` (24 files).
+- Automated checks use local fixtures and mocked imports.
+
+## Historical publication checks — 1.0.8
 
 ## Store status (November 12, 2026)
 
